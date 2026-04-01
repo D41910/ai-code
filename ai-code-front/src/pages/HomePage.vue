@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import TheWelcome from '../components/TheWelcome.vue'
 </script>
 
 <template>
   <main>
-    <TheWelcome />
+    <h1>首页</h1>
+    <p>欢迎使用灵创智能应用</p>
   </main>
 </template>
