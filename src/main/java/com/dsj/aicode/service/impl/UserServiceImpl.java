@@ -1,16 +1,27 @@
 package com.dsj.aicode.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.dsj.aicode.Exception.BusinessException;
 import com.dsj.aicode.Exception.ErrorCode;
+import com.dsj.aicode.constant.UserConstant;
 import com.dsj.aicode.mapper.UserMapper;
+import com.dsj.aicode.model.dto.UserQueryDTO;
 import com.dsj.aicode.model.entity.User;
 import com.dsj.aicode.model.enums.UserRoleEnum;
+import com.dsj.aicode.model.vo.UserVO;
 import com.dsj.aicode.service.UserService;
 import com.dsj.aicode.utils.SnowFlakeUtil;
+import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 用户 服务层实现。
@@ -28,10 +39,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
         if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号不得小于4位");
         }
         if (userPassword.length() < 8 || checkPassword.length() < 8) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码不得小于8位");
         }
         if (!userPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
@@ -58,4 +69,106 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         return user.getId();
     }
+
+    @Override
+    public UserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
+        if (StrUtil.hasBlank(userAccount, userPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
+        }
+        if (userAccount.length() < 4) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账户不得小于四位");
+        }
+        if (userPassword.length() < 8) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码不得小于8位");
+        }
+        String encryptPassword = SnowFlakeUtil.getEncryptPassword(userPassword);
+        //查询用户是否存在
+        QueryWrapper queryWrapper = new QueryWrapper();
+        queryWrapper.eq("user_account", userAccount);
+        queryWrapper.eq("user_password", encryptPassword);
+        User user = this.mapper.selectOneByQuery(queryWrapper);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
+        }
+        //记录用户登陆状态
+        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user.getId());
+        return getUserVO(user);
+    }
+
+    @Override
+    public boolean userLogout(HttpServletRequest request) {
+        //判断是否登陆
+        Object userId = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        Long currentUserId = (Long) userId;
+        if(currentUserId == null || currentUserId <= 0){
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        //从数据看库查询
+        User currentUser = this.getById(currentUserId);
+        if(currentUser == null){
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        //移除登陆状态
+        request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
+        return true;
+    }
+
+
+    @Override
+    public User getLoginUser(HttpServletRequest request) {
+        //判断是否登陆
+        Object userId = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        Long currentUserId = (Long) userId;
+        if(currentUserId == null || currentUserId <= 0){
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        //从数据看库查询
+        User currentUser = this.getById(currentUserId);
+        if(currentUser == null){
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        return currentUser;
+    }
+
+    /**
+     * 获取脱敏的已登陆用户信息
+     *
+     * @param user 用户信息
+     * @return 脱敏后用户信息
+     */
+    public UserVO getUserVO(User user) {
+        if (user == null) {
+            return null;
+        }
+        UserVO userVO = new UserVO();
+
+        BeanUtil.copyProperties(user, userVO);
+        return userVO;
+    }
+
+    @Override
+    public Page<UserVO> listUserVOByPage(UserQueryDTO userQueryDTO) {
+        QueryWrapper queryWrapper = new QueryWrapper().eq("id", userQueryDTO.getId())
+                .eq("user_role", userQueryDTO.getUserRole())
+                .like("user_name", userQueryDTO.getUserName(),StrUtil.isNotEmpty(userQueryDTO.getUserName()))
+                .like("user_account", userQueryDTO.getUserAccount(),StrUtil.isNotEmpty(userQueryDTO.getUserAccount()))
+                .like("user_profile", userQueryDTO.getUserProfile(),StrUtil.isNotEmpty(userQueryDTO.getUserProfile()))
+                .orderBy(userQueryDTO.getSortField(), "asc".equals(userQueryDTO.getSortOrder()));
+        Page<User> pageUsers = this.page(Page.of(userQueryDTO.getPageNum(), userQueryDTO.getPaseSize()), queryWrapper);
+        List<UserVO> userVOList = this.getUserVOList(pageUsers.getRecords());
+        Page<UserVO> page = new Page<>(pageUsers.getPageNumber(), pageUsers.getPageSize(), pageUsers.getTotalPage());
+        page.setRecords(userVOList);
+        return page;
+
+    }
+
+    @Override
+    public List<UserVO> getUserVOList(List<User> users) {
+        if(CollUtil.isEmpty(users)){
+            return new ArrayList<>();
+        }
+        return users.stream().map(this::getUserVO).collect(Collectors.toList());
+    }
+
+
 }

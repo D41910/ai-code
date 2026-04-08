@@ -13,6 +13,8 @@ mybatis-flex:
 server:
   port: 8123
   servlet:
+    session:
+      timeout: 30m
     context-path: /api
 # springdoc-openapi
 springdoc:
