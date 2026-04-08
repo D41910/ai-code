@@ -29,7 +29,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 24px;
+  padding: 16px;
   background: #f0f2f5;
   text-align: center;
 }

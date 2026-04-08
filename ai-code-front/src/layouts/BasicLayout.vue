@@ -25,6 +25,6 @@ const { Header, Content, Footer } = Layout
 
 .basic-content {
   flex: 1;
-  padding: 24px;
+  overflow-y: auto;
 }
 </style>

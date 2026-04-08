@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Menu, Button } from 'ant-design-vue'
+import { Menu, Button, Dropdown, Space, Avatar, message } from 'ant-design-vue'
 import type { MenuProps } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
+import { useLoginUserStore } from '@/stores/loginUser.ts'
+import { userLogout } from '@/api/userController'
+import { LogoutOutlined } from '@ant-design/icons-vue'
 
 const router = useRouter()
 const selectedKeys = ref<string[]>(['1'])
+const loginUserStore = useLoginUserStore()
 
 onMounted(() => {
   // 从window对象获取当前路由的key
@@ -16,17 +20,30 @@ onMounted(() => {
 const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
   const routes: Record<string, string> = {
     '1': '/',
-    '2': '/features',
-    '3': '/about'
+    '2': '/user/login',
+    '3': '/user/register',
+    '4': '/admin/userManage'
   }
   router.push(routes[key])
 }
 
 const menuItems: MenuProps['items'] = [
   { key: '1', label: '首页' },
-  { key: '2', label: '功能' },
-  { key: '3', label: '关于' },
 ]
+
+// 用户注销
+const doLogout = async () => {
+  const res = await userLogout()
+  if (res.data.code === 20000) {
+    loginUserStore.setLoginUser({
+      userName: '未登录',
+    })
+    message.success('退出登录成功')
+    await router.push('/user/login')
+  } else {
+    message.error('退出登录失败，' + res.data.message)
+  }
+}
 </script>
 
 <template>
@@ -44,7 +61,25 @@ const menuItems: MenuProps['items'] = [
       />
     </div>
     <div class="header-right">
-      <a-button type="primary">登录</a-button>
+      <div v-if="loginUserStore.loginUser.id">
+        <a-dropdown>
+          <a-space>
+            <a-avatar :src="loginUserStore.loginUser.userAvatar" />
+            {{ loginUserStore.loginUser.userName ?? '无名' }}
+          </a-space>
+          <template #overlay>
+            <a-menu>
+              <a-menu-item @click="doLogout">
+                <LogoutOutlined />
+                退出登录
+              </a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+      </div>
+      <div v-else>
+        <a-button type="primary" href="/user/login">登录</a-button>
+      </div>
     </div>
   </a-layout-header>
 </template>
