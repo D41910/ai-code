@@ -156,7 +156,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .orderBy(userQueryDTO.getSortField(), "asc".equals(userQueryDTO.getSortOrder()));
         Page<User> pageUsers = this.page(Page.of(userQueryDTO.getPageNum(), userQueryDTO.getPaseSize()), queryWrapper);
         List<UserVO> userVOList = this.getUserVOList(pageUsers.getRecords());
-        Page<UserVO> page = new Page<>(pageUsers.getPageNumber(), pageUsers.getPageSize(), pageUsers.getTotalPage());
+        Page<UserVO> page = new Page<>(pageUsers.getPageNumber(), pageUsers.getPageSize(), pageUsers.getTotalRow());
         page.setRecords(userVOList);
         return page;
 
