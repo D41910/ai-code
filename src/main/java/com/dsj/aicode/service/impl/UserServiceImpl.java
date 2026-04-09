@@ -2,9 +2,11 @@ package com.dsj.aicode.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.dsj.aicode.Exception.BusinessException;
 import com.dsj.aicode.Exception.ErrorCode;
+import com.dsj.aicode.Exception.ThrowUtils;
 import com.dsj.aicode.constant.UserConstant;
 import com.dsj.aicode.mapper.UserMapper;
 import com.dsj.aicode.model.dto.UserQueryDTO;
@@ -160,6 +162,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         page.setRecords(userVOList);
         return page;
 
+    }
+
+    @Override
+    public boolean deleteUser(Long id) {
+        User user = this.getById(id);
+        ThrowUtils.throwIf(ObjUtil.isEmpty(user),ErrorCode.NOT_FOUND_ERROR);
+        user.setIsDelete(1);
+        return this.updateById(user);
     }
 
     @Override

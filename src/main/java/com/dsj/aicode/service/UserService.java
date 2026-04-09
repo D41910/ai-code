@@ -77,4 +77,11 @@ public interface UserService extends IService<User> {
      * @return 返回
      */
     Page<UserVO> listUserVOByPage(UserQueryDTO userQueryDTO);
+
+    /**
+     * 逻辑删除
+     * @param id 用户id
+     * @return 返回结果
+     */
+    boolean deleteUser(Long id);
 }

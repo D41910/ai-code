@@ -121,7 +121,7 @@ public class UserController {
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> deleteUser(DeleteRequest deleteRequest) {
         ThrowUtils.throwIf(ObjUtil.isEmpty(deleteRequest) || deleteRequest.getId() <= 0, ErrorCode.PARAMS_ERROR);
-        boolean result = userService.removeById(deleteRequest.getId());
+        boolean result = userService.deleteUser(deleteRequest.getId());
         return ResultUtils.success(result);
     }
 
