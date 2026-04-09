@@ -48,6 +48,11 @@ const columns: TableColumnsType<UserVO> = [
     title: '创建时间',
     dataIndex: 'createTime',
     key: 'createTime',
+    customRender: ({ text }: { text: string }) => {
+      if (!text) return '-'
+      // 格式: 2026-04-09 10:30:00
+      return text.replace('T', ' ')
+    },
   },
   {
     title: '操作',
