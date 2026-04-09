@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/loginUser'
 import { userLogin } from '@/api/userController'
 
 const router = useRouter()
+const route = useRoute()
 const loginUserStore = useLoginUserStore()
 
 const formState = reactive<API.UserLoginDTO>({
@@ -13,17 +14,19 @@ const formState = reactive<API.UserLoginDTO>({
   userPassword: '',
 })
 
-const handleSubmit = async (values: any) => {
+const handleSubmit = async () => {
   try {
-    const res = await userLogin(values)
+    const res = await userLogin(formState)
     if (res.data.code === 20000 && res.data.data) {
       await loginUserStore.fetchLoginUser()
       message.success('登录成功')
-      router.push({ path: '/', replace: true })
+      // 登录后跳转到原访问页面或首页
+      const redirect = (route.query.redirect as string) || '/'
+      router.push({ path: redirect, replace: true })
     } else {
       message.error('登录失败，' + res.data.message)
     }
-  } catch (err) {
+  } catch {
     message.error('系统异常')
   }
 }
