@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * @author dongsijun
@@ -42,5 +43,15 @@ public class UserQueryDTO extends PageRequest implements Serializable {
      * 用户角色：0-user 1-admin ban
      */
     private Integer userRole;
+
+    /**
+     * 创建时间开始
+     */
+    private LocalDateTime startTime;
+
+    /**
+     * 创建时间结束
+     */
+    private LocalDateTime endTime;
 
 }

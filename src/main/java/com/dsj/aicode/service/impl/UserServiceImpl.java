@@ -155,6 +155,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .like("user_name", userQueryDTO.getUserName(),StrUtil.isNotEmpty(userQueryDTO.getUserName()))
                 .like("user_account", userQueryDTO.getUserAccount(),StrUtil.isNotEmpty(userQueryDTO.getUserAccount()))
                 .like("user_profile", userQueryDTO.getUserProfile(),StrUtil.isNotEmpty(userQueryDTO.getUserProfile()))
+                .ge( "create_time", userQueryDTO.getStartTime(),userQueryDTO.getStartTime() != null)
+                .le("create_time", userQueryDTO.getEndTime(),userQueryDTO.getEndTime() != null)
                 .orderBy(userQueryDTO.getSortField(), "asc".equals(userQueryDTO.getSortOrder()));
         Page<User> pageUsers = this.page(Page.of(userQueryDTO.getPageNum(), userQueryDTO.getPaseSize()), queryWrapper);
         List<UserVO> userVOList = this.getUserVOList(pageUsers.getRecords());
