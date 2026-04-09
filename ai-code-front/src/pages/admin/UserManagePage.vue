@@ -97,8 +97,8 @@ const fetchData = async () => {
       if (filterField.value === 'userRole') {
         params.userRole = filterValue.value
       } else if (filterField.value === 'createTime' && Array.isArray(filterValue.value)) {
-        params.createTimeStart = (filterValue.value[0] as Dayjs).format('YYYY-MM-DD HH:mm:ss')
-        params.createTimeEnd = (filterValue.value[1] as Dayjs).format('YYYY-MM-DD HH:mm:ss')
+        params.startTime = (filterValue.value[0] as Dayjs).format('YYYY-MM-DDTHH:mm:ss')
+        params.endTime = (filterValue.value[1] as Dayjs).format('YYYY-MM-DDTHH:mm:ss')
       } else {
         params[filterField.value] = filterValue.value
       }
