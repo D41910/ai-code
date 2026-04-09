@@ -13,22 +13,18 @@ const formState = reactive<API.UserLoginDTO>({
   userPassword: '',
 })
 
-/**
- * 提交表单
- * @param values
- */
 const handleSubmit = async (values: any) => {
-  const res = await userLogin(values)
-  // 登录成功，把登录态保存到全局状态中
-  if (res.data.code === 20000 && res.data.data) {
-    await loginUserStore.fetchLoginUser()
-    message.success('登录成功')
-    router.push({
-      path: '/admin/userManage',
-      replace: true,
-    })
-  } else {
-    message.error('登录失败，' + res.data.message)
+  try {
+    const res = await userLogin(values)
+    if (res.data.code === 20000 && res.data.data) {
+      await loginUserStore.fetchLoginUser()
+      message.success('登录成功')
+      router.push({ path: '/', replace: true })
+    } else {
+      message.error('登录失败，' + res.data.message)
+    }
+  } catch (err) {
+    message.error('系统异常')
   }
 }
 </script>
@@ -42,6 +38,7 @@ const handleSubmit = async (values: any) => {
         <a-form-item name="userAccount" :rules="[{ required: true, message: '请输入账号' }]">
           <a-input v-model:value="formState.userAccount" placeholder="请输入账号" />
         </a-form-item>
+
         <a-form-item
           name="userPassword"
           :rules="[
@@ -51,10 +48,12 @@ const handleSubmit = async (values: any) => {
         >
           <a-input-password v-model:value="formState.userPassword" placeholder="请输入密码" />
         </a-form-item>
+
         <div class="tips">
           没有账号？
           <RouterLink to="/user/register">去注册</RouterLink>
         </div>
+
         <a-form-item>
           <a-button type="primary" html-type="submit" style="width: 100%">登录</a-button>
         </a-form-item>
@@ -94,20 +93,8 @@ const handleSubmit = async (values: any) => {
   padding: 40px 32px;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-}
-
-.logo-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 8px;
-}
-
-.logo-container img {
-  width: 60px;
-  height: 60px;
 }
 
 .title {
@@ -132,18 +119,32 @@ const handleSubmit = async (values: any) => {
   text-align: right;
 }
 
-:deep(.ant-input),
-:deep(.ant-input-password) {
-  border-radius: 8px;
-  height: 40px;
-  border: 1px solid #e8e8e8;
-  transition: all 0.3s;
+:deep(.ant-form-item) {
+  margin-bottom: 16px;
 }
 
+/* 关键：去掉密码框内部嵌套的 input 层级错位 */
+:deep(.ant-input-affix-wrapper),
+:deep(.ant-input) {
+  height: 40px;
+  padding: 0 11px;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+:deep(.ant-input-password input) {
+  height: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+}
+
+/* 去掉聚焦高亮框 */
 :deep(.ant-input:focus),
-:deep(.ant-input-password:focus) {
-  border-color: #a855f7;
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+:deep(.ant-input-affix-wrapper:focus-within) {
+  box-shadow: none;
+  border-color: #d9d9d9;
+  outline: none;
 }
 
 :deep(.ant-btn-primary) {

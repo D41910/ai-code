@@ -100,20 +100,8 @@ const handleSubmit = async (values: any) => {
   padding: 40px 32px;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-}
-
-.logo-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 8px;
-}
-
-.logo-container img {
-  width: 60px;
-  height: 60px;
 }
 
 .title {
@@ -138,18 +126,32 @@ const handleSubmit = async (values: any) => {
   text-align: right;
 }
 
-:deep(.ant-input),
-:deep(.ant-input-password) {
-  border-radius: 8px;
-  height: 40px;
-  border: 1px solid #e8e8e8;
-  transition: all 0.3s;
+:deep(.ant-form-item) {
+  margin-bottom: 16px;
 }
 
+/* 关键：去掉密码框内部嵌套的 input 层级错位 */
+:deep(.ant-input-affix-wrapper),
+:deep(.ant-input) {
+  height: 40px;
+  padding: 0 11px;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+:deep(.ant-input-password input) {
+  height: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+}
+
+/* 去掉聚焦高亮框 */
 :deep(.ant-input:focus),
-:deep(.ant-input-password:focus) {
-  border-color: #a855f7;
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+:deep(.ant-input-affix-wrapper:focus-within) {
+  box-shadow: none;
+  border-color: #d9d9d9;
+  outline: none;
 }
 
 :deep(.ant-btn-primary) {

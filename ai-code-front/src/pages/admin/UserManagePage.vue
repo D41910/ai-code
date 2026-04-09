@@ -3,9 +3,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import type { TableColumnsType } from 'ant-design-vue'
 import { listUserVoByPage, deleteUser } from '@/api/userController'
-import { useLoginUserStore } from '@/stores/loginUser'
-
-const loginUserStore = useLoginUserStore()
+import type { Dayjs } from 'dayjs'
 
 interface UserVO {
   id?: number
@@ -18,12 +16,9 @@ interface UserVO {
   updateTime?: string
 }
 
+type FilterField = 'userAccount' | 'userName' | 'userProfile' | 'userRole' | 'createTime'
+
 const columns: TableColumnsType<UserVO> = [
-  {
-    title: 'id',
-    dataIndex: 'id',
-    key: 'id',
-  },
   {
     title: '账号',
     dataIndex: 'userAccount',
@@ -65,6 +60,22 @@ const total = ref(0)
 const current = ref(1)
 const pageSize = ref(10)
 
+const filterField = ref<FilterField | null>('userAccount')
+const filterValue = ref<string | number | [Dayjs, Dayjs] | null>(null)
+
+const filterFieldOptions = [
+  { label: '账号', value: 'userAccount' },
+  { label: '用户名', value: 'userName' },
+  { label: '简介', value: 'userProfile' },
+  { label: '用户角色', value: 'userRole' },
+  { label: '创建时间', value: 'createTime' },
+]
+
+const roleOptions = [
+  { label: '管理员', value: 1 },
+  { label: '用户', value: 0 },
+]
+
 const loading = reactive({
   table: false,
 })
@@ -72,10 +83,23 @@ const loading = reactive({
 const fetchData = async () => {
   loading.table = true
   try {
-    const res = await listUserVoByPage({
+    const params: Record<string, any> = {
       pageNum: current.value,
       paseSize: pageSize.value,
-    })
+    }
+
+    if (filterField.value && filterValue.value !== null && filterValue.value !== '') {
+      if (filterField.value === 'userRole') {
+        params.userRole = filterValue.value
+      } else if (filterField.value === 'createTime' && Array.isArray(filterValue.value)) {
+        params.createTimeStart = (filterValue.value[0] as Dayjs).format('YYYY-MM-DD HH:mm:ss')
+        params.createTimeEnd = (filterValue.value[1] as Dayjs).format('YYYY-MM-DD HH:mm:ss')
+      } else {
+        params[filterField.value] = filterValue.value
+      }
+    }
+
+    const res = await listUserVoByPage(params)
     if (res.data.code === 20000 && res.data.data) {
       data.value = res.data.data.records ?? []
       total.value = res.data.data.totalRow ?? 0
@@ -85,6 +109,15 @@ const fetchData = async () => {
   } finally {
     loading.table = false
   }
+}
+
+const doSearch = () => {
+  current.value = 1
+  fetchData()
+}
+
+const handleFilterFieldChange = () => {
+  filterValue.value = null
 }
 
 const handleDelete = async (id: number) => {
@@ -111,6 +144,45 @@ onMounted(() => {
     <div class="table-header">
       <h2>用户管理</h2>
     </div>
+    <div class="search-container">
+      <a-space :size="12">
+        <a-select
+          v-model:value="filterField"
+          placeholder="选择筛选字段"
+          style="width: 140px"
+          :options="filterFieldOptions"
+          allow-clear
+          @change="handleFilterFieldChange"
+        />
+        <a-input
+          v-if="filterField && filterField !== 'userRole' && filterField !== 'createTime'"
+          v-model:value="filterValue"
+          :placeholder="filterFieldOptions.find(f => f.value === filterField)?.label + '...'"
+          style="width: 160px"
+          allow-clear
+          @pressEnter="doSearch"
+        />
+        <a-select
+          v-if="filterField === 'userRole'"
+          v-model:value="filterValue"
+          placeholder="选择角色"
+          style="width: 140px"
+          :options="roleOptions"
+          allow-clear
+        />
+        <a-range-picker
+          v-if="filterField === 'createTime'"
+          v-model:value="filterValue"
+          style="width: 280px"
+          show-time
+          format="YYYY-MM-DD HH:mm:ss"
+          :placeholder="['开始时间', '结束时间']"
+        />
+        <a-button type="primary" @click="doSearch">搜索</a-button>
+        <a-button @click="filterField = null; filterValue = null; doSearch()">重置</a-button>
+      </a-space>
+    </div>
+    <a-divider />
     <a-table
       :columns="columns"
       :data-source="data"
@@ -163,6 +235,13 @@ onMounted(() => {
 
 .table-header h2 {
   margin: 0;
+}
+
+.search-container {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
 }
 
 .pagination-container {
