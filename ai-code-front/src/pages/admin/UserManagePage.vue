@@ -2,7 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import type { TableColumnsType } from 'ant-design-vue'
-import { listUserVoByPage, deleteUser } from '@/api/userController'
+import { listUserVoByPage, deleteUser, updateUser } from '@/api/userController'
 import type { Dayjs } from 'dayjs'
 
 interface UserVO {
@@ -50,7 +50,6 @@ const columns: TableColumnsType<UserVO> = [
     key: 'createTime',
     customRender: ({ text }: { text: string }) => {
       if (!text) return '-'
-      // 格式: 2026-04-09 10:30:00
       return text.replace('T', ' ')
     },
   },
@@ -83,6 +82,17 @@ const roleOptions = [
 
 const loading = reactive({
   table: false,
+})
+
+// 编辑弹窗
+const editVisible = ref(false)
+const editLoading = ref(false)
+const editForm = reactive({
+  id: 0,
+  userName: '',
+  userAvatar: '',
+  userProfile: '',
+  userRole: 0 as number,
 })
 
 const fetchData = async () => {
@@ -123,6 +133,39 @@ const doSearch = () => {
 
 const handleFilterFieldChange = () => {
   filterValue.value = null
+}
+
+const handleEdit = (record: UserVO) => {
+  editForm.id = record.id!
+  editForm.userName = record.userName || ''
+  editForm.userAvatar = record.userAvatar || ''
+  editForm.userProfile = record.userProfile || ''
+  editForm.userRole = record.userRole ?? 0
+  editVisible.value = true
+}
+
+const handleEditSubmit = async () => {
+  editLoading.value = true
+  try {
+    const res = await updateUser({
+      id: editForm.id,
+      userName: editForm.userName,
+      userAvatar: editForm.userAvatar,
+      userProfile: editForm.userProfile,
+      userRole: editForm.userRole,
+    })
+    if (res.data.code === 20000) {
+      message.success('修改成功')
+      editVisible.value = false
+      fetchData()
+    } else {
+      message.error('修改失败，' + res.data.message)
+    }
+  } catch {
+    message.error('修改失败')
+  } finally {
+    editLoading.value = false
+  }
 }
 
 const handleDelete = async (id: number) => {
@@ -207,7 +250,7 @@ onMounted(() => {
         </template>
         <template v-else-if="column.key === 'action'">
           <a-space>
-            <a-button type="link" size="small">编辑</a-button>
+            <a-button type="link" size="small" @click="handleEdit(record)">编辑</a-button>
             <a-button type="link" danger size="small" @click="handleDelete(record.id!)">删除</a-button>
           </a-space>
         </template>
@@ -225,6 +268,31 @@ onMounted(() => {
         @change="fetchData"
       />
     </div>
+
+    <!-- 编辑弹窗 -->
+    <a-modal
+      v-model:open="editVisible"
+      title="编辑用户"
+      :confirm-loading="editLoading"
+      ok-text="确认"
+      cancel-text="取消"
+      @ok="handleEditSubmit"
+    >
+      <a-form :model="editForm" layout="vertical">
+        <a-form-item label="用户名" name="userName">
+          <a-input v-model:value="editForm.userName" placeholder="请输入用户名" />
+        </a-form-item>
+        <a-form-item label="头像" name="userAvatar">
+          <a-input v-model:value="editForm.userAvatar" placeholder="请输入头像URL" />
+        </a-form-item>
+        <a-form-item label="简介" name="userProfile">
+          <a-textarea v-model:value="editForm.userProfile" placeholder="请输入简介" :rows="3" />
+        </a-form-item>
+        <a-form-item label="用户角色" name="userRole">
+          <a-select v-model:value="editForm.userRole" :options="roleOptions" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
