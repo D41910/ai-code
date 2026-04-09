@@ -29,6 +29,10 @@
             </a-space>
             <template #overlay>
               <a-menu>
+                <a-menu-item key="userInfo" @click="router.push('/user/info')">
+                  <UserOutlined />
+                  个人中心
+                </a-menu-item>
                 <a-menu-item @click="doLogout">
                   <LogoutOutlined />
                   退出登录
@@ -51,7 +55,7 @@ import { useRouter } from 'vue-router'
 import type { MenuProps } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/loginUser.ts'
 import { userLogout } from '@/api/userController'
-import { LogoutOutlined } from '@ant-design/icons-vue'
+import { LogoutOutlined, UserOutlined } from '@ant-design/icons-vue'
 
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
