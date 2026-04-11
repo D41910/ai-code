@@ -125,6 +125,27 @@ public class UserController {
         return ResultUtils.success(result);
     }
 
+
+
+    /**
+     * 根据主键更新用户。用户更新自己信息
+     *
+     * @param userUpdateDTO 用户
+     * @return {@code true} 更新成功，{@code false} 更新失败
+     */
+    @PutMapping("/update/oneself")
+    public BaseResponse<Boolean> updateUserOneself(@RequestBody UserUpdateDTO userUpdateDTO, HttpServletRequest request) {
+        ThrowUtils.throwIf(ObjUtil.isEmpty(userUpdateDTO) || ObjUtil.isEmpty(userUpdateDTO.getId()) || userUpdateDTO.getId() <= 0 , ErrorCode.PARAMS_ERROR);
+        Long id = userService.getLoginUser(request).getId();
+        ThrowUtils.throwIf(!id.equals(userUpdateDTO.getId()), ErrorCode.NO_AUTH_ERROR);
+        User user = new User();
+        BeanUtils.copyProperties(userUpdateDTO, user);
+        user.setUserPassword(SnowFlakeUtil.getEncryptPassword(userUpdateDTO.getUserPassword()));
+        boolean result = userService.updateById(user);
+        ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR);
+        return ResultUtils.success(result);
+    }
+
     /**
      * 根据主键更新用户。
      *
