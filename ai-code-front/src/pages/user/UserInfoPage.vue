@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/loginUser'
-import { getLoginUserVo, updateUser } from '@/api/userController'
+import { getLoginUserVo, updateUserOneself } from '@/api/userController'
 
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
@@ -21,6 +21,13 @@ const userInfo = ref({
 const editVisible = ref(false)
 const editLoading = ref(false)
 const editForm = ref({
+  userName: '',
+  userAvatar: '',
+  userProfile: '',
+  userPassword: '',
+})
+// 用于记录打开编辑弹窗时的原始值，不修改则传null
+const originalForm = ref({
   userName: '',
   userAvatar: '',
   userProfile: '',
@@ -51,10 +58,16 @@ const fetchUserInfo = async () => {
 }
 
 const handleEdit = () => {
+  originalForm.value = {
+    userName: userInfo.value.userName,
+    userAvatar: userInfo.value.userAvatar,
+    userProfile: userInfo.value.userProfile,
+  }
   editForm.value = {
     userName: userInfo.value.userName,
     userAvatar: userInfo.value.userAvatar,
     userProfile: userInfo.value.userProfile,
+    userPassword: '',
   }
   editVisible.value = true
 }
@@ -62,15 +75,18 @@ const handleEdit = () => {
 const handleEditSubmit = async () => {
   editLoading.value = true
   try {
-    const res = await updateUser({
+    // 不修改传null，修改为空字符串传空字符串
+    const res = await updateUserOneself({
       id: userInfo.value.id,
-      userName: editForm.value.userName,
-      userAvatar: editForm.value.userAvatar,
-      userProfile: editForm.value.userProfile,
+      userName: editForm.value.userName === originalForm.value.userName ? null : editForm.value.userName,
+      userAvatar: editForm.value.userAvatar === originalForm.value.userAvatar ? null : editForm.value.userAvatar,
+      userProfile: editForm.value.userProfile === originalForm.value.userProfile ? null : editForm.value.userProfile,
+      userPassword: editForm.value.userPassword === '' ? null : editForm.value.userPassword,
     })
     if (res.data.code === 20000) {
       message.success('修改成功')
       editVisible.value = false
+      editForm.value.userPassword = ''
       await loginUserStore.fetchLoginUser()
       await fetchUserInfo()
     } else {
@@ -146,6 +162,10 @@ onMounted(() => {
         </a-form-item>
         <a-form-item label="简介" name="userProfile">
           <a-textarea v-model:value="editForm.userProfile" placeholder="请输入简介" :rows="3" />
+        </a-form-item>
+        <a-form-item label="新密码（不修改请留空）" name="userPassword"
+          :rules="[{ min: 8, message: '密码不能小于 8 位' }]">
+          <a-input-password v-model:value="editForm.userPassword" placeholder="请输入新密码" />
         </a-form-item>
       </a-form>
     </a-modal>

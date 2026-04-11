@@ -124,3 +124,15 @@ export async function updateUser(body: API.UserUpdateDTO, options?: { [key: stri
     ...(options || {}),
   })
 }
+
+/** 更新当前登录用户信息 PUT /user/update/oneself */
+export async function updateUserOneself(body: API.UserUpdateDTO, options?: { [key: string]: any }) {
+  return request<API.BaseResponseBoolean>('/user/update/oneself', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}

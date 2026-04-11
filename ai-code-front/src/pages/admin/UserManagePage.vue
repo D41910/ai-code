@@ -93,6 +93,13 @@ const editForm = reactive({
   userAvatar: '',
   userProfile: '',
   userRole: 0 as number,
+  userPassword: '',
+})
+const originalForm = ref({
+  userName: '',
+  userAvatar: '',
+  userProfile: '',
+  userRole: 0 as number,
 })
 
 const fetchData = async () => {
@@ -136,11 +143,18 @@ const handleFilterFieldChange = () => {
 }
 
 const handleEdit = (record: UserVO) => {
+  originalForm.value = {
+    userName: record.userName || '',
+    userAvatar: record.userAvatar || '',
+    userProfile: record.userProfile || '',
+    userRole: record.userRole ?? 0,
+  }
   editForm.id = record.id!
   editForm.userName = record.userName || ''
   editForm.userAvatar = record.userAvatar || ''
   editForm.userProfile = record.userProfile || ''
   editForm.userRole = record.userRole ?? 0
+  editForm.userPassword = ''
   editVisible.value = true
 }
 
@@ -149,10 +163,11 @@ const handleEditSubmit = async () => {
   try {
     const res = await updateUser({
       id: editForm.id,
-      userName: editForm.userName,
-      userAvatar: editForm.userAvatar,
-      userProfile: editForm.userProfile,
-      userRole: editForm.userRole,
+      userName: editForm.userName === originalForm.value.userName ? null : editForm.userName,
+      userAvatar: editForm.userAvatar === originalForm.value.userAvatar ? null : editForm.userAvatar,
+      userProfile: editForm.userProfile === originalForm.value.userProfile ? null : editForm.userProfile,
+      userRole: editForm.userRole === originalForm.value.userRole ? null : editForm.userRole,
+      userPassword: editForm.userPassword === '' ? null : editForm.userPassword,
     })
     if (res.data.code === 20000) {
       message.success('修改成功')
@@ -290,6 +305,10 @@ onMounted(() => {
         </a-form-item>
         <a-form-item label="用户角色" name="userRole">
           <a-select v-model:value="editForm.userRole" :options="roleOptions" />
+        </a-form-item>
+        <a-form-item label="密码（不修改请留空）" name="userPassword"
+          :rules="[{ min: 8, message: '密码不能小于 8 位' }]">
+          <a-input-password v-model:value="editForm.userPassword" placeholder="请输入新密码" autocomplete="new-password" />
         </a-form-item>
       </a-form>
     </a-modal>

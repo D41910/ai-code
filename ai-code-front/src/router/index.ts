@@ -19,7 +19,7 @@ import NoAuth from '../pages/NoAuth.vue'
 // 检查权限
 const checkAccess = (userRole: number | undefined, needAccess: AccessEnumType): boolean => {
   if (needAccess === ACCESS_ENUM.NOT_LOGIN) return true
-  if (!userRole) return false
+  if (userRole === undefined || userRole === null) return false
 
   const loginUserAccess: AccessEnumType = userRole === 1 ? ACCESS_ENUM.ADMIN : ACCESS_ENUM.USER
 
