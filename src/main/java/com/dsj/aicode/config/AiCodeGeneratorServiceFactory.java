@@ -1,0 +1,24 @@
+package com.dsj.aicode.config;
+
+import com.dsj.aicode.ai.AiCodeGeneratorService;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.service.AiServices;
+import jakarta.annotation.Resource;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * @author dongsijun
+ * @date 2026/4/11  14:58
+ */
+@Configuration
+public class AiCodeGeneratorServiceFactory {
+
+    @Resource
+    private ChatModel chatModel;
+
+    @Bean
+    public AiCodeGeneratorService aiCodeGeneratorService() {
+        return AiServices.create(AiCodeGeneratorService.class, chatModel);
+    }
+}
