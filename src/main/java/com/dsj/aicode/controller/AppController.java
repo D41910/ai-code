@@ -2,6 +2,7 @@ package com.dsj.aicode.controller;
 
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.dsj.aicode.Exception.ErrorCode;
 import com.dsj.aicode.Exception.ThrowUtils;
 import com.dsj.aicode.annotation.AuthCheck;
@@ -26,8 +27,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.util.Map;
 
 /**
  * 应用 控制层。
@@ -53,12 +58,26 @@ public class AppController {
      * @return 生成流式结果
      */
     @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> chatToGenCode(@RequestParam Long appId, @RequestParam String message, HttpServletRequest request) {
+    public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId, @RequestParam String message, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjUtil.isEmpty(appId) || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID无效");
         ThrowUtils.throwIf(StrUtil.isEmpty(message), ErrorCode.PARAMS_ERROR, "用户消息不能为空");
         //获取当前登陆用户
         User loginUser = userService.getLoginUser(request);
-        return appService.chatToGenCode(appId, message, loginUser);
+        Flux<String> flux = appService.chatToGenCode(appId, message, loginUser);
+        return flux
+                .map(chunk -> {
+                    Map<String, String> map = Map.of("d", chunk);
+                    String jsonStr = JSONUtil.toJsonStr(map);
+                    return ServerSentEvent.<String>builder()
+                            .data(jsonStr)
+                            .build();
+                })
+                .concatWith(Mono.just(
+                        ServerSentEvent.<String>builder()
+                                .data("done")
+                                .data("")
+                                .build()
+                ));
     }
 
     /**
