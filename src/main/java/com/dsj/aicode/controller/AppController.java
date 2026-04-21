@@ -22,9 +22,12 @@ import com.dsj.aicode.service.UserService;
 import com.mybatisflex.core.paginate.Page;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 /**
  * 应用 控制层。
@@ -34,14 +37,29 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/app")
+@RequiredArgsConstructor
 public class AppController {
 
-    @Resource
-    private AppService appService;
-    @Autowired
-    private UserService userService;
+    private final AppService appService;
+    private final UserService userService;
 
-    // ==================== 用户接口 ====================
+
+    /**
+     * 应用聊天生成代码
+     *
+     * @param appId   应用ID
+     * @param message 用户消息
+     * @param request 请求体
+     * @return 生成流式结果
+     */
+    @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> chatToGenCode(@RequestParam Long appId, @RequestParam String message, HttpServletRequest request) {
+        ThrowUtils.throwIf(ObjUtil.isEmpty(appId) || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID无效");
+        ThrowUtils.throwIf(StrUtil.isEmpty(message), ErrorCode.PARAMS_ERROR, "用户消息不能为空");
+        //获取当前登陆用户
+        User loginUser = userService.getLoginUser(request);
+        return appService.chatToGenCode(appId, message, loginUser);
+    }
 
     /**
      * 创建应用（须填写 initPrompt）
@@ -54,7 +72,7 @@ public class AppController {
     public BaseResponse<Long> addApp(@RequestBody AppAddDTO appAddDTO, HttpServletRequest request) {
         ThrowUtils.throwIf(ObjUtil.isEmpty(appAddDTO),ErrorCode.PARAMS_ERROR);
         String initPrompt = appAddDTO.getInitPrompt();
-        ThrowUtils.throwIf(StrUtil.isNotBlank(initPrompt),ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(StrUtil.isBlank(initPrompt),ErrorCode.PARAMS_ERROR);
         long appId = appService.addApp(appAddDTO, request);
         return ResultUtils.success(appId);
     }
@@ -91,7 +109,7 @@ public class AppController {
     /**
      * 用户查看自己的应用详情
      *
-     * @param id      应用id
+     * @param id 应用id
      * @return 应用详情
      */
     @GetMapping("/get")

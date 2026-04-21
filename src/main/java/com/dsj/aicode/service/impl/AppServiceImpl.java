@@ -8,6 +8,7 @@ import com.dsj.aicode.Exception.BusinessException;
 import com.dsj.aicode.Exception.ErrorCode;
 import com.dsj.aicode.Exception.ThrowUtils;
 import com.dsj.aicode.constant.AppConstant;
+import com.dsj.aicode.core.AiCodeGeneratorFacade;
 import com.dsj.aicode.mapper.AppMapper;
 import com.dsj.aicode.mapper.UserMapper;
 import com.dsj.aicode.model.dto.AppAddDTO;
@@ -26,9 +27,12 @@ import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -44,13 +48,29 @@ import java.util.stream.Collectors;
  * @since 2026/04/15 14:42
  */
 @Service
+@RequiredArgsConstructor(onConstructor_ = {@Lazy})
 public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppService {
 
     private final UserService userService;
+    private final AiCodeGeneratorFacade aiCodeGeneratorFacade;
 
-    public AppServiceImpl(@Lazy UserService userService) {
-        this.userService = userService;
+    @Override
+    public Flux<String> chatToGenCode(Long appId, String message, User loginUser) {
+        //校验
+        ThrowUtils.throwIf(appId == null || appId <= 0,ErrorCode.PARAMS_ERROR,"应用ID不能为空");
+        ThrowUtils.throwIf(StrUtil.isBlank(message),ErrorCode.PARAMS_ERROR,"用户消息不能为空");
+        //查询应用信息
+        App app = this.getById(appId);
+        ThrowUtils.throwIf(app == null,ErrorCode.NOT_FOUND_ERROR,"应用数据不存在");
+        //权限校验
+        ThrowUtils.throwIf(!app.getUserId().equals(loginUser.getId()),ErrorCode.NO_AUTH_ERROR,"无权限访问该应用");
+        //获取应用代码的生成类型
+        String codeGenTypeStr = app.getCodeGenType();
+        CodeGenTypeEnum codeGenTypeEnum = CodeGenTypeEnum.getEnumByValue(codeGenTypeStr);
+        ThrowUtils.throwIf(codeGenTypeEnum == null,ErrorCode.SYSTEM_ERROR,"不支持的代码生成类型");
+        return aiCodeGeneratorFacade.generateAndSaveCodeStream(message,codeGenTypeEnum,appId);
     }
+
 
     @Override
     public long addApp(AppAddDTO appAddDTO, HttpServletRequest request) {

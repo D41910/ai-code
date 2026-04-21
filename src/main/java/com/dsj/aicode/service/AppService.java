@@ -5,10 +5,12 @@ import com.dsj.aicode.model.dto.AppQueryDTO;
 import com.dsj.aicode.model.dto.AppUpdateDTO;
 import com.dsj.aicode.model.dto.AppAddDTO;
 import com.dsj.aicode.model.entity.App;
+import com.dsj.aicode.model.entity.User;
 import com.dsj.aicode.model.vo.AppVO;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.service.IService;
 import jakarta.servlet.http.HttpServletRequest;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -19,6 +21,17 @@ import java.util.List;
  * @since 2026/04/15 14:42
  */
 public interface AppService extends IService<App> {
+
+
+    /**
+     * 应用聊天生成代码
+     *
+     * @param appId     应用ID
+     * @param message   用户消息
+     * @param loginUser 请求对象
+     * @return 生成流式结果
+     */
+    public Flux<String> chatToGenCode(Long appId, String message, User loginUser);
 
     /**
      * 创建应用
@@ -50,7 +63,7 @@ public interface AppService extends IService<App> {
     /**
      * 用户查看自己的应用详情
      *
-     * @param id      应用id
+     * @param id 应用id
      * @return 应用详情
      */
     AppVO getAppVOById(Long id);
@@ -59,7 +72,7 @@ public interface AppService extends IService<App> {
      * 分页查询自己的应用列表
      *
      * @param appQueryDTO 查询参数
-     * @param request      Http请求
+     * @param request     Http请求
      * @return 分页结果
      */
     Page<AppVO> listOneselfByPage(AppQueryDTO appQueryDTO, HttpServletRequest request);
