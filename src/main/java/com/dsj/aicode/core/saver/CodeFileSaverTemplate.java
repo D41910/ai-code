@@ -8,6 +8,7 @@ import com.dsj.aicode.Exception.BusinessException;
 import com.dsj.aicode.Exception.ErrorCode;
 import com.dsj.aicode.ai.model.HtmlCodeResult;
 import com.dsj.aicode.ai.model.MultiFileCodeResult;
+import com.dsj.aicode.constant.AppConstant;
 import com.dsj.aicode.model.enums.CodeGenTypeEnum;
 
 import java.io.File;
@@ -20,7 +21,7 @@ public abstract class CodeFileSaverTemplate<T> {
     /**
      * 文件保存根目录
      */
-    private static final String FILE_SAVE_ROOT_DIR = System.getProperty("user.dir") + "/tmp/code_output";
+    private static final String FILE_SAVE_ROOT_DIR = AppConstant.CODE_OUTPUT_ROOT_DIR;
 
 
     /**
@@ -58,7 +59,7 @@ public abstract class CodeFileSaverTemplate<T> {
      */
     protected final String buildUniqueDir(Long appId) {
         String codeType = getCodeType().getValue();
-        String uniqueDirName = StrUtil.format("{}/{}", codeType, appId);
+        String uniqueDirName = StrUtil.format("{}_{}", codeType, appId);
         String dirPath = FILE_SAVE_ROOT_DIR + File.separator + uniqueDirName;
         FileUtil.mkdir(dirPath);
         return dirPath;

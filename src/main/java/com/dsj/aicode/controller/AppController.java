@@ -10,10 +10,7 @@ import com.dsj.aicode.common.BaseResponse;
 import com.dsj.aicode.common.DeleteRequest;
 import com.dsj.aicode.common.ResultUtils;
 import com.dsj.aicode.constant.UserConstant;
-import com.dsj.aicode.model.dto.AppAddDTO;
-import com.dsj.aicode.model.dto.AppAdminUpdateDTO;
-import com.dsj.aicode.model.dto.AppQueryDTO;
-import com.dsj.aicode.model.dto.AppUpdateDTO;
+import com.dsj.aicode.model.dto.*;
 import com.dsj.aicode.model.entity.App;
 import com.dsj.aicode.model.entity.User;
 import com.dsj.aicode.model.enums.CodeGenTypeEnum;
@@ -47,6 +44,24 @@ public class AppController {
 
     private final AppService appService;
     private final UserService userService;
+
+
+    /**
+     * 应用部署
+     * @param appDeployDTO 部署请求
+     * @param request 请求
+     * @return 部署URL
+     */
+    @PostMapping("/deploy")
+    public BaseResponse<String> deployApp(@RequestBody AppDeployDTO appDeployDTO,HttpServletRequest request) {
+        ThrowUtils.throwIf(ObjUtil.isEmpty(appDeployDTO),ErrorCode.PARAMS_ERROR);
+        Long appId = appDeployDTO.getAppId();
+        ThrowUtils.throwIf(ObjUtil.isEmpty(appId) || appId <= 0,ErrorCode.PARAMS_ERROR,"应用ID不能为空");
+
+        User loginUser = userService.getLoginUser(request);
+        String deployUrl = appService.deployApp(appId,loginUser);
+        return ResultUtils.success(deployUrl);
+    }
 
 
     /**
