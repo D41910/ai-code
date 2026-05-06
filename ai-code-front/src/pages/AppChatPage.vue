@@ -3,6 +3,7 @@ import { onMounted, reactive, ref, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { getAppVOById, chatToGenCode, deployApp } from '@/api/appController'
+import { getStaticPreviewUrl } from '@/config/env'
 import type { AppVO } from '@/api/typings'
 
 const route = useRoute()
@@ -28,9 +29,9 @@ const fetchAppDetail = async () => {
     const res = await getAppVOById({ id: appId.value })
     if (res.data.code === 20000 && res.data.data) {
       app.value = res.data.data
-      if (app.value.deployKey) {
-        deployUrl.value = `${window.location.origin}/${app.value.deployKey}/`
-        iframeSrc.value = deployUrl.value
+      // 用生成目录预览
+      if (app.value.codeGenType) {
+        iframeSrc.value = getStaticPreviewUrl(app.value.codeGenType, appId.value)
       }
     } else {
       message.error('获取应用详情失败')
@@ -76,7 +77,10 @@ const sendMessage = async () => {
     eventSource.onmessage = (event) => {
       const lastMsg = chatMessages.value[chatMessages.value.length - 1]
       if (event.data === 'done' || event.data === '') {
-        // 完成
+        // 完成，刷新预览
+        isGenerating.value = false
+        closeEventSource()
+        fetchAppDetail()
       } else {
         try {
           const data = JSON.parse(event.data)
@@ -213,7 +217,7 @@ onUnmounted(() => {
             class="preview-iframe"
           ></iframe>
           <div v-else class="preview-placeholder">
-            <p>点击「部署」按钮后即可预览网站</p>
+            <p>输入需求，让 AI 为你生成网站</p>
           </div>
         </div>
       </div>
