@@ -34,6 +34,9 @@ const canOperate = computed(() => isOwner.value || isAdmin.value)
 // 输入框禁用状态
 const inputDisabled = computed(() => !isOwner.value)
 
+// 是否已部署
+const isDeployed = computed(() => !!app.value?.deployKey)
+
 // 详情弹窗
 const detailVisible = ref(false)
 const editVisible = ref(false)
@@ -285,10 +288,10 @@ onUnmounted(() => {
         <a-button
           type="primary"
           :loading="loading.deploy"
-          :disabled="!app"
+          :disabled="!app || isDeployed"
           @click="handleDeploy"
         >
-          部署
+          {{ isDeployed ? '已部署' : '部署' }}
         </a-button>
       </div>
     </div>

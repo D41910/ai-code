@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { getAppVOById, updateOneself, adminUpdate } from '@/api/appController'
 import { useLoginUserStore } from '@/stores/loginUser'
+import { copyToClipboard } from '@/utils/copy'
 import type { AppVO } from '@/api/typings'
 
 const route = useRoute()
@@ -30,6 +31,21 @@ const originalForm = ref({
 })
 
 const isEditMode = ref(false)
+
+// 访问链接
+const deployUrl = computed(() => {
+  if (app.value?.deployKey) {
+    return `http://localhost/${app.value.deployKey}`
+  }
+  return ''
+})
+
+const handleCopyUrl = () => {
+  if (deployUrl.value) {
+    copyToClipboard(deployUrl.value)
+    message.success('链接已复制')
+  }
+}
 
 const fetchAppDetail = async () => {
   if (!appId.value) {
@@ -95,6 +111,10 @@ const handleCancel = () => {
   router.back()
 }
 
+const handleEnterChat = () => {
+  router.push({ path: '/app/chat', query: { appId: String(appId.value) } })
+}
+
 onMounted(() => {
   fetchAppDetail()
 })
@@ -144,12 +164,60 @@ onMounted(() => {
           <a-form-item v-if="app?.codeGenType" label="代码生成类型">
             <a-input :value="app.codeGenType" disabled />
           </a-form-item>
+
+          <a-form-item v-if="app?.deployKey" label="部署密钥">
+            <a-input :value="app.deployKey" disabled />
+          </a-form-item>
         </a-form>
       </a-spin>
     </div>
+
+    <!-- 应用信息 -->
+    <div v-if="app" class="app-info-card">
+      <div class="app-info-header">
+        <span class="app-info-title">应用信息</span>
+      </div>
+      <div class="app-info-grid">
+        <div class="app-info-item">
+          <span class="item-label">应用ID</span>
+          <span class="item-value">{{ app.id || '-' }}</span>
+        </div>
+        <div class="app-info-item">
+          <span class="item-label">创建者</span>
+          <span class="item-value">
+            <a-avatar v-if="app.user?.userAvatar" :src="app.user.userAvatar" :size="20" />
+            <a-avatar v-else :size="20">{{ app.user?.userName?.[0] || '无' }}</a-avatar>
+            <span style="margin-left: 6px">{{ app.user?.userName || app.user?.userAccount || '未知' }}</span>
+          </span>
+        </div>
+        <div class="app-info-item">
+          <span class="item-label">创建时间</span>
+          <span class="item-value">{{ app.createTime ? app.createTime.replace('T', ' ') : '-' }}</span>
+        </div>
+        <div class="app-info-item">
+          <span class="item-label">更新时间</span>
+          <span class="item-value">{{ app.updateTime ? app.updateTime.replace('T', ' ') : '-' }}</span>
+        </div>
+        <div class="app-info-item">
+          <span class="item-label">部署时间</span>
+          <span class="item-value">{{ app.deployedTime ? app.deployedTime.replace('T', ' ') : '-' }}</span>
+        </div>
+        <div class="app-info-item">
+          <span class="item-label">访问链接</span>
+          <span class="item-value">
+            <a v-if="deployUrl" :href="deployUrl" target="_blank" class="deploy-link">
+              {{ deployUrl }}
+            </a>
+            <span v-else class="no-deploy">未部署</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
     <div class="edit-footer">
       <a-space :size="12">
         <a-button @click="handleCancel">取消</a-button>
+        <a-button @click="handleEnterChat">进入对话</a-button>
         <a-button type="primary" :loading="loading.save" @click="handleSubmit">
           保存
         </a-button>
@@ -181,6 +249,73 @@ onMounted(() => {
 
 .edit-form {
   max-width: 500px;
+}
+
+.app-info-card {
+  margin-top: 16px;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.app-info-header {
+  padding: 12px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.app-info-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.app-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  border-top: 1px solid #f0f0f0;
+}
+
+.app-info-item {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #f0f0f0;
+  border-right: 1px solid #f0f0f0;
+}
+
+.app-info-item:nth-child(2n) {
+  border-right: none;
+}
+
+.app-info-item:nth-last-child(-n+2) {
+  border-bottom: none;
+}
+
+.item-label {
+  color: #666;
+  font-size: 14px;
+  min-width: 80px;
+}
+
+.item-value {
+  color: #333;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.deploy-link {
+  color: #1890ff;
+  text-decoration: none;
+}
+
+.deploy-link:hover {
+  color: #40a9ff;
+}
+
+.no-deploy {
+  color: #999;
 }
 
 .edit-footer {
