@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
-import { getAppVOById, chatToGenCode, deployApp } from '@/api/appController'
+import { message, Modal } from 'ant-design-vue'
+import { getAppVOById, chatToGenCode, deployApp, deleteOneself, adminDelete, updateOneself, adminUpdate } from '@/api/appController'
 import { getStaticPreviewUrl } from '@/config/env'
 import { useLoginUserStore } from '@/stores/loginUser'
 import type { AppVO } from '@/api/typings'
@@ -25,8 +25,26 @@ const isOwner = computed(() => {
   return String(app.value.userId) === String(loginUserStore.loginUser.id)
 })
 
+// 判断是否为管理员
+const isAdmin = computed(() => loginUserStore.loginUser.userRole === 1)
+
+// 操作权限（本人或管理员）
+const canOperate = computed(() => isOwner.value || isAdmin.value)
+
 // 输入框禁用状态
 const inputDisabled = computed(() => !isOwner.value)
+
+// 详情弹窗
+const detailVisible = ref(false)
+const editVisible = ref(false)
+const editLoading = ref(false)
+const editForm = reactive({
+  id: '',
+  appName: '',
+})
+const originalForm = ref({
+  appName: '',
+})
 const chatMessages = ref<Array<{ role: 'user' | 'assistant'; content: string }>>([])
 const inputMessage = ref('')
 const isGenerating = ref(false)
@@ -73,6 +91,62 @@ const handleDeploy = async () => {
   } finally {
     loading.deploy = false
   }
+}
+
+const handleEdit = () => {
+  if (!app.value) return
+  editForm.id = String(app.value.id)
+  editForm.appName = app.value.appName || ''
+  originalForm.value.appName = app.value.appName || ''
+  editVisible.value = true
+  detailVisible.value = false
+}
+
+const handleEditSubmit = async () => {
+  editLoading.value = true
+  try {
+    const res = isAdmin.value
+      ? await adminUpdate({ id: editForm.id, appName: editForm.appName })
+      : await updateOneself({ id: editForm.id, appName: editForm.appName === originalForm.value.appName ? undefined : editForm.appName })
+    if (res.data.code === 20000) {
+      message.success('修改成功')
+      editVisible.value = false
+      fetchAppDetail()
+    } else {
+      message.error('修改失败：' + res.data.message)
+    }
+  } catch {
+    message.error('修改失败')
+  } finally {
+    editLoading.value = false
+  }
+}
+
+const handleDelete = () => {
+  if (!app.value) return
+  Modal.confirm({
+    title: '确认删除',
+    content: '确定要删除这个应用吗？删除后无法恢复。',
+    okText: '确认',
+    cancelText: '取消',
+    okType: 'danger',
+    async onOk() {
+      try {
+        const res = isAdmin.value
+          ? await adminDelete({ deleteRequest: { id: String(app.value!.id) } })
+          : await deleteOneself({ deleteRequest: { id: String(app.value!.id) } })
+        if (res.data.code === 20000) {
+          message.success('删除成功')
+          detailVisible.value = false
+          router.push('/')
+        } else {
+          message.error('删除失败：' + res.data.message)
+        }
+      } catch {
+        message.error('删除失败')
+      }
+    },
+  })
 }
 
 const sendMessage = async () => {
@@ -205,6 +279,9 @@ onUnmounted(() => {
         <span class="app-name">{{ app?.appName || '加载中...' }}</span>
       </div>
       <div class="top-bar-right">
+        <a-button @click="detailVisible = true">
+          应用详情
+        </a-button>
         <a-button
           type="primary"
           :loading="loading.deploy"
@@ -282,6 +359,62 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- 应用详情弹窗 -->
+    <a-drawer
+      v-model:open="detailVisible"
+      title="应用详情"
+      :width="360"
+      :closable="true"
+    >
+      <div v-if="app" class="app-detail">
+        <!-- 应用基础信息 -->
+        <div class="detail-section">
+          <h4 class="detail-title">基础信息</h4>
+          <div class="detail-item">
+            <span class="detail-label">创建者：</span>
+            <span class="detail-value">
+              <a-avatar v-if="app.user?.userAvatar" :src="app.user.userAvatar" :size="24" />
+              <a-avatar v-else :size="24">{{ app.user?.userName?.[0] || '无' }}</a-avatar>
+              <span style="margin-left: 8px">{{ app.user?.userName || app.user?.userAccount || '未知' }}</span>
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">创建时间：</span>
+            <span class="detail-value">{{ app.createTime ? app.createTime.replace('T', ' ') : '-' }}</span>
+          </div>
+        </div>
+
+        <!-- 操作栏 -->
+        <div v-if="canOperate" class="detail-section">
+          <h4 class="detail-title">操作</h4>
+          <div class="detail-actions">
+            <a-button type="primary" @click="handleEdit">
+              修改
+            </a-button>
+            <a-button danger @click="handleDelete">
+              删除
+            </a-button>
+          </div>
+        </div>
+      </div>
+    </a-drawer>
+
+    <!-- 编辑弹窗 -->
+    <a-modal
+      v-model:open="editVisible"
+      title="修改应用"
+      :confirm-loading="editLoading"
+      ok-text="确认"
+      cancel-text="取消"
+      @ok="handleEditSubmit"
+    >
+      <a-form :model="editForm" layout="vertical">
+        <a-form-item label="应用名称" name="appName">
+          <a-input v-model:value="editForm.appName" placeholder="请输入应用名称" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -447,5 +580,51 @@ onUnmounted(() => {
 .typing-text {
   margin-left: 8px;
   color: #999;
+}
+
+.app-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.detail-section {
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 16px;
+}
+
+.detail-section:last-child {
+  border-bottom: none;
+}
+
+.detail-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 12px 0;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.detail-label {
+  color: #666;
+  font-size: 14px;
+  min-width: 70px;
+}
+
+.detail-value {
+  color: #333;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 12px;
 }
 </style>
