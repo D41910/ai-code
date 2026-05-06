@@ -36,7 +36,7 @@ public class StaticResourceController {
      * @return
      */
     @GetMapping("/{deploy}/**")
-    public ResponseEntity<Resource> serveStaticResource(@PathVariable String deployKey, HttpServletRequest request){
+    public ResponseEntity<Resource> serveStaticResource(@PathVariable("deploy") String deployKey, HttpServletRequest request){
         try{
             //获取资源路径
             String resourcePath = request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE).toString();
@@ -44,7 +44,7 @@ public class StaticResourceController {
             //如果是目录访问(不带斜杠),重定向到带斜杠的URL
             if(resourcePath.isEmpty()){
                 HttpHeaders headers = new HttpHeaders();
-                headers.add("Locatioin",request.getRequestURI()+"/");
+                headers.add("Location",request.getRequestURI()+"/");
                 return new ResponseEntity<>(headers, HttpStatus.MOVED_PERMANENTLY);
             }
             //默认返回index.html
