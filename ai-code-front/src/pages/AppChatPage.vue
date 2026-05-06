@@ -68,49 +68,90 @@ const sendMessage = async () => {
 
   // 添加一个空的 assistant 消息用于流式填充
   chatMessages.value.push({ role: 'assistant', content: '' })
+  const aiMessageIndex = chatMessages.value.length - 1
+
+  generateCode(userMessage, aiMessageIndex)
+}
+
+// 生成代码 - 使用 EventSource 处理流式响应
+const generateCode = async (userMessage: string, aiMessageIndex: number) => {
+  let streamCompleted = false
 
   try {
-    // 使用 SSE 获取流式响应
-    const url = `/api/app/chat/gen/code?appId=${appId.value}&message=${encodeURIComponent(userMessage)}`
-    eventSource = new EventSource(url)
+    // 构建URL参数
+    const params = new URLSearchParams({
+      appId: appId.value || '',
+      message: userMessage,
+    })
 
-    eventSource.onmessage = (event) => {
-      const lastMsg = chatMessages.value[chatMessages.value.length - 1]
-      if (event.data === 'done' || event.data === '') {
-        // 完成，刷新预览
-        isGenerating.value = false
-        closeEventSource()
-        fetchAppDetail()
-      } else {
-        try {
-          const data = JSON.parse(event.data)
-          if (data.d) {
-            lastMsg.content += data.d
-          }
-        } catch {
-          lastMsg.content += event.data
+    const url = `/api/app/chat/gen/code?${params}`
+
+    // 创建 EventSource 连接
+    eventSource = new EventSource(url)
+    let fullContent = ''
+
+    // 处理接收到的消息
+    eventSource.onmessage = function (event) {
+      if (streamCompleted) return
+
+      try {
+        // 解析JSON包装的数据
+        const parsed = JSON.parse(event.data)
+        const content = parsed.d
+
+        // 拼接内容
+        if (content !== undefined && content !== null) {
+          fullContent += content
+          chatMessages.value[aiMessageIndex].content = fullContent
         }
+      } catch (error) {
+        console.error('解析消息失败:', error)
+        handleError(error, aiMessageIndex)
       }
     }
 
-    eventSource.onerror = () => {
-      message.error('连接失败，请重试')
+    // 处理done事件
+    eventSource.addEventListener('done', function () {
+      if (streamCompleted) return
+
+      streamCompleted = true
       isGenerating.value = false
       closeEventSource()
-    }
 
-    eventSource.onopen = () => {
-      // 连接成功
+      // 延迟更新预览，确保后端已完成处理
+      setTimeout(async () => {
+        await fetchAppDetail()
+      }, 1000)
+    })
+
+    // 处理错误
+    eventSource.onerror = function () {
+      if (streamCompleted || !isGenerating.value) return
+      // 检查是否是正常的连接关闭
+      if (eventSource?.readyState === EventSource.CONNECTING) {
+        streamCompleted = true
+        isGenerating.value = false
+        closeEventSource()
+
+        setTimeout(async () => {
+          await fetchAppDetail()
+        }, 1000)
+      } else {
+        handleError(new Error('SSE连接错误'), aiMessageIndex)
+      }
     }
   } catch (err) {
-    message.error('发送消息失败')
-    isGenerating.value = false
-    // 移除最后添加的空消息
-    chatMessages.value.pop()
-    if (chatMessages.value[chatMessages.value.length - 1]?.role === 'user') {
-      chatMessages.value.pop()
-    }
+    handleError(err, aiMessageIndex)
   }
+}
+
+// 错误处理函数
+const handleError = (error: unknown, aiMessageIndex: number) => {
+  console.error('生成代码失败：', error)
+  chatMessages.value[aiMessageIndex].content = '抱歉，生成过程中出现了错误，请重试。'
+  isGenerating.value = false
+  closeEventSource()
+  message.error('生成失败，请重试')
 }
 
 const closeEventSource = () => {
