@@ -4,17 +4,29 @@ import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { getAppVOById, chatToGenCode, deployApp } from '@/api/appController'
 import { getStaticPreviewUrl } from '@/config/env'
+import { useLoginUserStore } from '@/stores/loginUser'
 import type { AppVO } from '@/api/typings'
 
 const route = useRoute()
 const router = useRouter()
+const loginUserStore = useLoginUserStore()
 
 const appId = computed(() => route.query.appId as string)
+const isViewMode = computed(() => route.query.view === '1')
 const app = ref<AppVO | null>(null)
 const loading = reactive({
   app: false,
   deploy: false,
 })
+
+// 判断是否为所有者
+const isOwner = computed(() => {
+  if (!app.value?.userId || !loginUserStore.loginUser.id) return false
+  return String(app.value.userId) === String(loginUserStore.loginUser.id)
+})
+
+// 输入框禁用状态
+const inputDisabled = computed(() => !isOwner.value)
 const chatMessages = ref<Array<{ role: 'user' | 'assistant'; content: string }>>([])
 const inputMessage = ref('')
 const isGenerating = ref(false)
@@ -32,6 +44,11 @@ const fetchAppDetail = async () => {
       // 用生成目录预览
       if (app.value.codeGenType) {
         iframeSrc.value = getStaticPreviewUrl(app.value.codeGenType, appId.value)
+      }
+      // 非查看模式，自动发送初始消息
+      if (!isViewMode.value && app.value.initPrompt) {
+        inputMessage.value = app.value.initPrompt
+        sendMessage()
       }
     } else {
       message.error('获取应用详情失败')
@@ -226,15 +243,17 @@ onUnmounted(() => {
 
         <!-- 输入区域 -->
         <div class="chat-input-area">
-          <a-input
-            v-model:value="inputMessage"
-            placeholder="输入你的需求，如：帮我生成一个用户管理页面"
-            :disabled="isGenerating"
-            @pressEnter="sendMessage"
-          />
+          <a-tooltip :title="inputDisabled ? '无法在别人的作品下对话哦~' : ''">
+            <a-input
+              v-model:value="inputMessage"
+              placeholder="输入你的需求，如：帮我生成一个用户管理页面"
+              :disabled="isGenerating || inputDisabled"
+              @pressEnter="sendMessage"
+            />
+          </a-tooltip>
           <a-button
             type="primary"
-            :disabled="!inputMessage.trim() || isGenerating"
+            :disabled="!inputMessage.trim() || isGenerating || inputDisabled"
             @click="sendMessage"
           >
             发送

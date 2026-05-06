@@ -111,6 +111,16 @@ const handleChat = (appId: string | number) => {
   router.push({ path: '/app/chat', query: { appId: String(appId) } })
 }
 
+const handleView = (appId: string | number) => {
+  router.push({ path: '/app/chat', query: { appId: String(appId), view: '1' } })
+}
+
+const handleViewWork = (app: AppVO) => {
+  if (app.deployKey) {
+    window.open(`http://localhost/${app.deployKey}`, '_blank')
+  }
+}
+
 const handleEdit = (appId: string | number) => {
   router.push({ path: '/user/app/edit', query: { id: String(appId) } })
 }
@@ -169,12 +179,22 @@ onMounted(() => {
               v-for="app in myApps"
               :key="app.id"
               class="app-card"
-              @click="handleChat(app.id!)"
             >
-              <div class="app-cover">
+              <div class="app-cover" @click="handleChat(app.id!)">
                 <img v-if="app.cover" :src="app.cover" :alt="app.appName" />
                 <div v-else class="app-cover-placeholder">
                   <span>{{ app.appName?.[0] || 'A' }}</span>
+                </div>
+                <div class="app-cover-overlay">
+                  <a-button type="primary" @click.stop="handleChat(app.id!)">
+                    查看对话
+                  </a-button>
+                  <a-button v-if="app.deployKey" @click.stop="handleViewWork(app)">
+                    查看作品
+                  </a-button>
+                  <a-button @click.stop="handleEdit(app.id!)">
+                    编辑
+                  </a-button>
                 </div>
               </div>
               <div class="app-info">
@@ -182,9 +202,6 @@ onMounted(() => {
                 <p class="app-desc">{{ app.initPrompt || '无描述' }}</p>
                 <div class="app-footer">
                   <span v-if="app.deployKey" class="deploy-tag">已部署</span>
-                  <a-button type="link" size="small" @click.stop="handleEdit(app.id!)">
-                    编辑
-                  </a-button>
                 </div>
               </div>
             </div>
@@ -215,12 +232,19 @@ onMounted(() => {
               v-for="app in featuredApps"
               :key="app.id"
               class="app-card"
-              @click="handleChat(app.id!)"
             >
-              <div class="app-cover">
+              <div class="app-cover" @click="handleChat(app.id!)">
                 <img v-if="app.cover" :src="app.cover" :alt="app.appName" />
                 <div v-else class="app-cover-placeholder">
                   <span>{{ app.appName?.[0] || 'A' }}</span>
+                </div>
+                <div class="app-cover-overlay">
+                  <a-button type="primary" @click.stop="handleView(app.id!)">
+                    查看对话
+                  </a-button>
+                  <a-button v-if="app.deployKey" @click.stop="handleViewWork(app)">
+                    查看作品
+                  </a-button>
                 </div>
               </div>
               <div class="app-info">
@@ -346,6 +370,17 @@ onMounted(() => {
   gap: 16px;
 }
 
+.app-cover {
+  height: 130px;
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+
 .app-card {
   border: 1px solid #f0f0f0;
   border-radius: 8px;
@@ -365,12 +400,15 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  cursor: pointer;
 }
 
 .app-cover img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
 }
 
 .app-cover-placeholder {
@@ -386,7 +424,7 @@ onMounted(() => {
 }
 
 .app-info {
-  padding: 12px;
+  padding: 10px 12px;
 }
 
 .app-name {
@@ -399,21 +437,77 @@ onMounted(() => {
 }
 
 .app-desc {
-  margin: 0 0 12px 0;
+  margin: 0 0 8px 0;
   font-size: 12px;
   color: #999;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  height: 36px;
+  white-space: nowrap;
+  height: 18px;
 }
 
 .app-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 24px;
+}
+
+.app-card {
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.app-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.app-card:hover .app-cover-overlay {
+  opacity: 1;
+}
+
+.app-cover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  border-radius: 0;
+}
+
+.app-cover-overlay :deep(.ant-btn) {
+  padding: 4px 12px;
+  font-size: 12px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.95);
+  border-color: transparent;
+  color: #333;
+  border-radius: 4px;
+}
+
+.app-cover-overlay :deep(.ant-btn-primary) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+}
+
+.app-cover-overlay :deep(.ant-btn:hover) {
+  transform: scale(1.05);
+  opacity: 1;
+}
+
+.app-cover-overlay :deep(.ant-btn-primary:hover) {
+  background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%);
 }
 
 .deploy-tag {
