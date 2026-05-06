@@ -81,23 +81,27 @@ const fetchMyApps = async () => {
 }
 
 // 精选应用列表
+const featuredAppsPage = reactive({
+  current: 1,
+  pageSize: 8,
+  total: 0,
+})
 const featuredApps = ref<AppVO[]>([])
-const featuredTotal = ref(0)
 const featuredLoading = reactive({ table: false })
-const featuredCurrent = ref(1)
-const featuredPageSize = ref(8)
 
 const fetchFeaturedApps = async () => {
   featuredLoading.table = true
   try {
     const res = await listFeaturedByPage({
-      pageNum: featuredCurrent.value,
-      paseSize: featuredPageSize.value,
+      pageNum: featuredAppsPage.current,
+      pageSize: featuredAppsPage.pageSize,
     })
     if (res.data.code === 20000 && res.data.data) {
       featuredApps.value = res.data.data.records ?? []
-      featuredTotal.value = res.data.data.totalRow ?? 0
+      featuredAppsPage.total = res.data.data.totalRow ?? 0
     }
+  } catch (error) {
+    console.error('加载精选应用失败：', error)
   } finally {
     featuredLoading.table = false
   }
@@ -231,11 +235,11 @@ onMounted(() => {
             </div>
           </div>
         </a-spin>
-        <div v-if="featuredTotal > featuredPageSize" class="pagination-wrapper">
+        <div v-if="featuredAppsPage.total > featuredAppsPage.pageSize" class="pagination-wrapper">
           <a-pagination
-            v-model:current="featuredCurrent"
-            v-model:page-size="featuredPageSize"
-            :total="featuredTotal"
+            v-model:current="featuredAppsPage.current"
+            v-model:page-size="featuredAppsPage.pageSize"
+            :total="featuredAppsPage.total"
             :show-size-changer="false"
             @change="fetchFeaturedApps"
           />
