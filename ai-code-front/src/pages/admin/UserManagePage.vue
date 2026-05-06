@@ -4,6 +4,7 @@ import { message } from 'ant-design-vue'
 import type { TableColumnsType } from 'ant-design-vue'
 import { listUserVoByPage, deleteUser, updateUser } from '@/api/userController'
 import type { Dayjs } from 'dayjs'
+import { copyToClipboard } from '@/utils/copy'
 
 interface UserVO {
   id?: number
@@ -23,31 +24,37 @@ const columns: TableColumnsType<UserVO> = [
     title: '账号',
     dataIndex: 'userAccount',
     key: 'userAccount',
+    width: 100,
   },
   {
     title: '用户名',
     dataIndex: 'userName',
     key: 'userName',
+    width: 100,
   },
   {
     title: '头像',
     dataIndex: 'userAvatar',
     key: 'userAvatar',
+    width: 60,
   },
   {
     title: '简介',
     dataIndex: 'userProfile',
     key: 'userProfile',
+    width: 150,
   },
   {
     title: '用户角色',
     dataIndex: 'userRole',
     key: 'userRole',
+    width: 80,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     key: 'createTime',
+    width: 130,
     customRender: ({ text }: { text: string }) => {
       if (!text) return '-'
       return text.replace('T', ' ')
@@ -56,6 +63,8 @@ const columns: TableColumnsType<UserVO> = [
   {
     title: '操作',
     key: 'action',
+    width: 140,
+    fixed: 'right',
   },
 ]
 
@@ -185,7 +194,7 @@ const handleEditSubmit = async () => {
 
 const handleDelete = async (id: number) => {
   try {
-    const res = await deleteUser({ id })
+    const res = await deleteUser({ deleteRequest: { id } })
     if (res.data.code === 20000) {
       message.success('删除成功')
       fetchData()
@@ -251,12 +260,28 @@ onMounted(() => {
       :data-source="data"
       :loading="loading.table"
       :pagination="false"
+      :scroll="{ x: 760 }"
       row-key="id"
     >
       <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'userAvatar'">
+        <template v-if="column.key === 'userAccount'">
+          <a-tooltip :title="record.userAccount" @click="copyToClipboard(record.userAccount || '')">
+            <span class="cell-text">{{ record.userAccount }}</span>
+          </a-tooltip>
+        </template>
+        <template v-else-if="column.key === 'userName'">
+          <a-tooltip :title="record.userName" @click="copyToClipboard(record.userName || '')">
+            <span class="cell-text">{{ record.userName }}</span>
+          </a-tooltip>
+        </template>
+        <template v-else-if="column.key === 'userAvatar'">
           <a-avatar v-if="record.userAvatar" :src="record.userAvatar" />
           <a-avatar v-else>{{ record.userName?.[0] || '无' }}</a-avatar>
+        </template>
+        <template v-else-if="column.key === 'userProfile'">
+          <a-tooltip :title="record.userProfile" @click="copyToClipboard(record.userProfile || '')">
+            <span class="cell-text">{{ record.userProfile }}</span>
+          </a-tooltip>
         </template>
         <template v-else-if="column.key === 'userRole'">
           <a-tag :color="record.userRole === 1 ? 'blue' : 'green'">
@@ -341,5 +366,18 @@ onMounted(() => {
   justify-content: flex-end;
   margin-top: 16px;
   padding-bottom: 24px;
+}
+
+.cell-text {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cell-text:hover {
+  color: #1890ff;
 }
 </style>

@@ -35,6 +35,7 @@ router.afterEach((to) => {
 const originMenuItems = [
   { key: '/', label: '首页', access: ACCESS_ENUM.NOT_LOGIN as AccessEnumType },
   { key: '/admin/userManage', label: '用户管理', access: ACCESS_ENUM.ADMIN as AccessEnumType },
+  { key: '/admin/appManage', label: '应用管理', access: ACCESS_ENUM.ADMIN as AccessEnumType },
 ]
 
 // 过滤菜单项

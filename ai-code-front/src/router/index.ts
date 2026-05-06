@@ -15,6 +15,7 @@ type AccessEnumType = (typeof ACCESS_ENUM)[keyof typeof ACCESS_ENUM]
 // 页面组件
 import HomePage from '../pages/HomePage.vue'
 import NoAuth from '../pages/NoAuth.vue'
+import AppChatPage from '../pages/AppChatPage.vue'
 
 // 检查权限
 const checkAccess = (userRole: number | undefined, needAccess: AccessEnumType): boolean => {
@@ -77,6 +78,27 @@ const router = createRouter({
       component: () => import('../pages/admin/UserManagePage.vue'),
       meta: { access: ACCESS_ENUM.ADMIN, title: '用户管理' },
     },
+    // 应用管理（需管理员权限）
+    {
+      path: '/admin/appManage',
+      name: 'adminAppManage',
+      component: () => import('../pages/admin/AppManagePage.vue'),
+      meta: { access: ACCESS_ENUM.ADMIN, title: '应用管理' },
+    },
+    // 应用聊天页面（需登录）
+    {
+      path: '/app/chat',
+      name: 'appChat',
+      component: AppChatPage,
+      meta: { access: ACCESS_ENUM.USER, title: '应用聊天' },
+    },
+    // 编辑应用（需登录）
+    {
+      path: '/user/app/edit',
+      name: 'appEdit',
+      component: () => import('../pages/user/AppEditPage.vue'),
+      meta: { access: ACCESS_ENUM.USER, title: '编辑应用' },
+    },
   ] as RouteRecordRaw[],
 })
 
@@ -126,6 +148,9 @@ router.afterEach((to) => {
     '/user/register': '/user/register',
     '/user/info': '/user/info',
     '/admin/userManage': '/admin/userManage',
+    '/admin/appManage': '/admin/appManage',
+    '/app/chat': '/',
+    '/user/app/edit': '/',
   }
   ;(window as any).currentMenuKey = routeKeyMap[to.path] || '/'
 })

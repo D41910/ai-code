@@ -125,7 +125,7 @@ export async function updateUser(body: API.UserUpdateDTO, options?: { [key: stri
   })
 }
 
-/** 更新当前登录用户信息 PUT /user/update/oneself */
+/** 此处后端没有提供注释 PUT /user/update/oneself */
 export async function updateUserOneself(body: API.UserUpdateDTO, options?: { [key: string]: any }) {
   return request<API.BaseResponseBoolean>('/user/update/oneself', {
     method: 'PUT',

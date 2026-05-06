@@ -7,8 +7,6 @@ const myAxios = axios.create({
   timeout: 60000,
   withCredentials: true,
 })
-
-// 全局请求拦截器
 myAxios.interceptors.request.use(
   function (config) {
     // Do something before request is sent
