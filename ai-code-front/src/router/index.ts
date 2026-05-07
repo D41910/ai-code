@@ -106,7 +106,7 @@ const router = createRouter({
 let firstFetchLoginUser = true
 
 // 全局路由守卫 - 权限校验
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, from) => {
   const loginUserStore = useLoginUserStore()
   let loginUser = loginUserStore.loginUser
 
@@ -125,19 +125,15 @@ router.beforeEach(async (to, from, next) => {
     // 未登录：跳转到登录页
     if (!loginUser || loginUser.userRole === undefined || loginUser.userRole === null) {
       message.warning('请先登录')
-      next(`/user/login?redirect=${to.fullPath}`)
-      return
+      return { path: '/user/login', query: { redirect: to.fullPath } }
     }
 
     // 权限不足：跳转到无权限页面
     if (!checkAccess(loginUser.userRole, needAccess)) {
       message.error('没有权限访问该页面')
-      next('/noAuth')
-      return
+      return { path: '/noAuth' }
     }
   }
-
-  next()
 })
 
 // 全局后置守卫 - 更新当前选中菜单

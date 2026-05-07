@@ -7,6 +7,7 @@ import { getStaticPreviewUrl } from '@/config/env'
 import { useLoginUserStore } from '@/stores/loginUser'
 import { copyToClipboard } from '@/utils/copy'
 import { CheckCircleOutlined } from '@ant-design/icons-vue'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import type { AppVO } from '@/api/typings'
 
 const route = useRoute()
@@ -53,6 +54,7 @@ const isGenerating = ref(false)
 const deployUrl = ref('')
 const iframeSrc = ref('')
 const deployModalVisible = ref(false)
+const isInitialLoad = ref(true)
 
 const openDeployedSite = () => {
   if (deployUrl.value) {
@@ -79,11 +81,13 @@ const fetchAppDetail = async () => {
       if (app.value.codeGenType) {
         iframeSrc.value = getStaticPreviewUrl(app.value.codeGenType, appId.value)
       }
-      // 非查看模式，自动发送初始消息
-      if (!isViewMode.value && app.value.initPrompt) {
+      // 非查看模式且是首次加载，自动发送初始消息
+      if (!isViewMode.value && app.value.initPrompt && isInitialLoad.value) {
         inputMessage.value = app.value.initPrompt
         sendMessage()
       }
+      // 首次加载完成后，设置为 false，后续刷新不再自动发送
+      isInitialLoad.value = false
     } else {
       message.error('获取应用详情失败')
     }
@@ -236,24 +240,23 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
       // 延迟更新预览，确保后端已完成处理
       setTimeout(async () => {
         await fetchAppDetail()
-      }, 1000)
+      }, 3000)
     })
 
     // 处理错误
     eventSource.onerror = function () {
+      // 如果已经完成或不在生成中，直接返回
       if (streamCompleted || !isGenerating.value) return
-      // 检查是否是正常的连接关闭
-      if (eventSource?.readyState === EventSource.CONNECTING) {
-        streamCompleted = true
-        isGenerating.value = false
-        closeEventSource()
 
-        setTimeout(async () => {
-          await fetchAppDetail()
-        }, 1000)
-      } else {
-        handleError(new Error('SSE连接错误'), aiMessageIndex)
-      }
+      // 标记为完成状态
+      streamCompleted = true
+      isGenerating.value = false
+      closeEventSource()
+
+      // 延迟更新预览
+      setTimeout(async () => {
+        await fetchAppDetail()
+      }, 3000)
     }
   } catch (err) {
     handleError(err, aiMessageIndex)
@@ -331,7 +334,10 @@ onUnmounted(() => {
               <span v-if="msg.role === 'user'">👤</span>
               <span v-else>🤖</span>
             </div>
-            <div class="message-content">{{ msg.content }}</div>
+            <div class="message-content">
+              <MarkdownRenderer v-if="msg.role === 'assistant'" :content="msg.content" />
+              <span v-else>{{ msg.content }}</span>
+            </div>
           </div>
           <div v-if="isGenerating && chatMessages[chatMessages.length - 1]?.role === 'assistant'" class="message assistant">
             <div class="message-avatar">🤖</div>
@@ -567,6 +573,19 @@ onUnmounted(() => {
 .message.user .message-content {
   background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
   color: #fff;
+}
+
+.message.assistant .message-content {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.message.assistant .message-content :deep(.markdown-body) {
+  margin: 0;
+}
+
+.message.assistant .message-content :deep(.markdown-body p:last-child) {
+  margin-bottom: 0;
 }
 
 .message.assistant .message-content {
