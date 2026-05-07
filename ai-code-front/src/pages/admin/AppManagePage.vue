@@ -6,6 +6,7 @@ import type { TableColumnsType } from 'ant-design-vue'
 import { adminListByPage, adminDelete, adminUpdate } from '@/api/appController'
 import type { AppVO } from '@/api/typings'
 import { copyToClipboard } from '@/utils/copy'
+import { formatCodeGenType } from '@/utils/codeGenTypes'
 
 const router = useRouter()
 
@@ -220,7 +221,12 @@ onMounted(() => {
       row-key="id"
     >
       <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'appName'">
+        <template v-if="column.key === 'id'">
+          <a-tooltip :title="record.id" @click="copyToClipboard(String(record.id) || '')">
+            <span class="cell-text">{{ record.id }}</span>
+          </a-tooltip>
+        </template>
+        <template v-else-if="column.key === 'appName'">
           <a-tooltip :title="record.appName" @click="copyToClipboard(record.appName || '')">
             <span class="cell-text">{{ record.appName }}</span>
           </a-tooltip>
@@ -235,7 +241,7 @@ onMounted(() => {
           </a-tooltip>
         </template>
         <template v-else-if="column.key === 'codeGenType'">
-          <span class="cell-text">{{ record.codeGenType }}</span>
+          <span class="cell-text">{{ formatCodeGenType(record.codeGenType) }}</span>
         </template>
         <template v-else-if="column.key === 'deployKey'">
           <a-tooltip :title="record.deployKey" @click="copyToClipboard(record.deployKey || '')">
