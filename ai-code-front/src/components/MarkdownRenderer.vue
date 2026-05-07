@@ -1,35 +1,37 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { marked } from 'marked'
+import { computed } from 'vue'
+import { Marked } from 'marked'
+import { markedHighlight } from 'marked-highlight'
 import hljs from 'highlight.js/lib/core'
 // 引入需要支持的语言
 import javascript from 'highlight.js/lib/languages/javascript'
 import html from 'highlight.js/lib/languages/xml'
 import css from 'highlight.js/lib/languages/css'
+import typescript from 'highlight.js/lib/languages/typescript'
 
 // 注册语言
 hljs.registerLanguage('javascript', javascript)
 hljs.registerLanguage('html', html)
 hljs.registerLanguage('css', css)
 hljs.registerLanguage('xml', html)
+hljs.registerLanguage('typescript', typescript)
 
-// 配置 marked
-marked.setOptions({
-  highlight: (code: string, lang: string) => {
-    if (lang && hljs.getLanguage(lang)) {
+// 创建 marked 实例并配置 highlight
+const markedInstance = new Marked(
+  markedHighlight({
+    langPrefix: 'hljs language-',
+    highlight(code: string, lang: string) {
+      const language = hljs.getLanguage(lang) ? lang : 'plaintext'
       try {
-        return hljs.highlight(code, { language: lang }).value
+        return hljs.highlight(code, { language }).value
       } catch {
         return code
       }
-    }
-    // 尝试自动检测语言
-    try {
-      return hljs.highlightAuto(code).value
-    } catch {
-      return code
-    }
-  },
+    },
+  })
+)
+
+markedInstance.setOptions({
   breaks: true,
   gfm: true,
 })
@@ -43,7 +45,7 @@ const props = defineProps<Props>()
 const renderedHtml = computed(() => {
   if (!props.content) return ''
   try {
-    return marked(props.content) as string
+    return markedInstance.parse(props.content) as string
   } catch {
     return props.content
   }
