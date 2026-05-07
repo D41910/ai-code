@@ -427,8 +427,8 @@ onMounted(() => {
 .quick-item {
   display: inline-block;
   padding: 6px 12px;
-  background: rgba(0, 131, 143, 0.1);
-  border: 1px solid rgba(0, 131, 143, 0.25);
+  background: transparent;
+  border: 1px solid rgba(0, 131, 143, 0.3);
   border-radius: 14px;
   font-size: 12px;
   color: #00838f;
@@ -437,9 +437,8 @@ onMounted(() => {
 }
 
 .quick-item:hover {
-  background: rgba(0, 131, 143, 0.2);
+  background: rgba(0, 131, 143, 0.1);
   border-color: rgba(0, 131, 143, 0.5);
-  transform: translateY(-2px);
 }
 
 .main-content {
@@ -468,6 +467,20 @@ onMounted(() => {
   font-size: 18px;
   font-weight: 600;
   color: #333;
+}
+
+.section-actions :deep(.ant-btn) {
+  color: #fff;
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  padding: 6px 16px;
+  height: auto;
+}
+
+.section-actions :deep(.ant-btn:hover) {
+  opacity: 0.9;
 }
 
 .empty-state {
