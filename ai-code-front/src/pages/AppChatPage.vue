@@ -330,9 +330,8 @@ onUnmounted(() => {
             :key="index"
             :class="['message', msg.role]"
           >
-            <div class="message-avatar">
-              <span v-if="msg.role === 'user'">👤</span>
-              <span v-else>🤖</span>
+            <div v-if="msg.role === 'user'" class="message-avatar">
+              <span>👤</span>
             </div>
             <div class="message-content">
               <MarkdownRenderer v-if="msg.role === 'assistant'" :content="msg.content" />
@@ -340,7 +339,6 @@ onUnmounted(() => {
             </div>
           </div>
           <div v-if="isGenerating && chatMessages[chatMessages.length - 1]?.role === 'assistant'" class="message assistant">
-            <div class="message-avatar">🤖</div>
             <div class="message-content">
               <a-spin size="small" />
               <span class="typing-text">正在生成代码...</span>
