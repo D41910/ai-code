@@ -5,6 +5,8 @@ import { message, Modal } from 'ant-design-vue'
 import { getAppVOById, chatToGenCode, deployApp, deleteOneself, adminDelete, updateOneself, adminUpdate } from '@/api/appController'
 import { getStaticPreviewUrl } from '@/config/env'
 import { useLoginUserStore } from '@/stores/loginUser'
+import { copyToClipboard } from '@/utils/copy'
+import { CheckCircleOutlined } from '@ant-design/icons-vue'
 import type { AppVO } from '@/api/typings'
 
 const route = useRoute()
@@ -34,9 +36,6 @@ const canOperate = computed(() => isOwner.value || isAdmin.value)
 // 输入框禁用状态
 const inputDisabled = computed(() => !isOwner.value)
 
-// 是否已部署
-const isDeployed = computed(() => !!app.value?.deployKey)
-
 // 详情弹窗
 const detailVisible = ref(false)
 const editVisible = ref(false)
@@ -53,6 +52,20 @@ const inputMessage = ref('')
 const isGenerating = ref(false)
 const deployUrl = ref('')
 const iframeSrc = ref('')
+const deployModalVisible = ref(false)
+
+const openDeployedSite = () => {
+  if (deployUrl.value) {
+    window.open(deployUrl.value, '_blank')
+  }
+}
+
+const copyDeployUrl = () => {
+  if (deployUrl.value) {
+    copyToClipboard(deployUrl.value)
+    message.success('链接已复制')
+  }
+}
 let eventSource: EventSource | null = null
 
 const fetchAppDetail = async () => {
@@ -87,7 +100,9 @@ const handleDeploy = async () => {
     if (res.data.code === 20000 && res.data.data) {
       deployUrl.value = res.data.data
       iframeSrc.value = deployUrl.value
-      message.success('部署成功')
+      deployModalVisible.value = true
+      // 刷新应用详情，获取最新的 deployKey
+      await fetchAppDetail()
     } else {
       message.error('部署失败：' + res.data.message)
     }
@@ -294,10 +309,10 @@ onUnmounted(() => {
         <a-button
           type="primary"
           :loading="loading.deploy"
-          :disabled="!app || isDeployed"
+          :disabled="!app"
           @click="handleDeploy"
         >
-          {{ isDeployed ? '已部署' : '部署' }}
+          部署
         </a-button>
       </div>
     </div>
@@ -427,6 +442,31 @@ onUnmounted(() => {
           <a-input v-model:value="editForm.appName" placeholder="请输入应用名称" />
         </a-form-item>
       </a-form>
+    </a-modal>
+
+    <!-- 部署成功弹窗 -->
+    <a-modal
+      v-model:open="deployModalVisible"
+      :footer="null"
+      :closable="true"
+      centered
+      width="400px"
+    >
+      <div class="deploy-success-modal">
+        <div class="success-icon">
+          <CheckCircleOutlined style="font-size: 64px; color: #52c41a" />
+        </div>
+        <div class="success-title">网站部署成功</div>
+        <div class="success-desc">你的网站已经成功部署成功,可以通过以下链接访问:</div>
+        <div class="deploy-url-box">
+          <span class="deploy-url">{{ deployUrl }}</span>
+          <a-button type="link" size="small" @click="copyDeployUrl">复制</a-button>
+        </div>
+        <div class="modal-actions">
+          <a-button @click="openDeployedSite">访问网站</a-button>
+          <a-button type="primary" @click="deployModalVisible = false">关闭</a-button>
+        </div>
+      </div>
     </a-modal>
   </div>
 </template>
@@ -654,6 +694,53 @@ onUnmounted(() => {
 
 .detail-actions {
   display: flex;
+  gap: 12px;
+}
+
+.deploy-success-modal {
+  text-align: center;
+  padding: 8px 0 24px;
+}
+
+.success-icon {
+  margin-bottom: 16px;
+}
+
+.success-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.success-desc {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.deploy-url-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.deploy-url {
+  color: #1890ff;
+  font-size: 14px;
+  word-break: break-all;
+  flex: 1;
+  text-align: left;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
   gap: 12px;
 }
 </style>
