@@ -188,6 +188,11 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
     eventSource.onmessage = function (event) {
       if (streamCompleted) return
 
+      // 跳过空消息和done事件（done事件由单独的监听器处理）
+      if (!event.data || event.data === 'done') {
+        return
+      }
+
       try {
         // 解析JSON包装的数据
         const parsed = JSON.parse(event.data)
@@ -199,8 +204,9 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
           chatMessages.value[aiMessageIndex].content = fullContent
         }
       } catch (error) {
-        console.error('解析消息失败:', error)
-        handleError(error, aiMessageIndex)
+        // 非JSON格式的数据直接拼接（如纯文本片段）
+        fullContent += event.data
+        chatMessages.value[aiMessageIndex].content = fullContent
       }
     }
 
