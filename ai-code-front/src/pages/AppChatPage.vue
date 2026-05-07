@@ -350,8 +350,12 @@ onUnmounted(() => {
           </a-button>
         </div>
         <div class="preview-content">
+          <div v-if="isGenerating" class="preview-loading">
+            <a-spin size="large" />
+            <p>正在生成网站...</p>
+          </div>
           <iframe
-            v-if="iframeSrc"
+            v-else-if="iframeSrc"
             :src="iframeSrc"
             frameborder="0"
             class="preview-iframe"
@@ -578,6 +582,22 @@ onUnmounted(() => {
   background: #fff;
   border-radius: 8px;
   color: #999;
+}
+
+.preview-loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 8px;
+  color: #666;
+}
+
+.preview-loading p {
+  margin-top: 16px;
 }
 
 .typing-text {
