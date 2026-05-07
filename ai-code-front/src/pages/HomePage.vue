@@ -198,11 +198,15 @@ onMounted(() => {
                 </div>
               </div>
               <div class="app-info">
-                <h3 class="app-name">{{ app.appName }}</h3>
-                <p class="app-desc">{{ app.initPrompt || '无描述' }}</p>
-                <div class="app-footer">
-                  <span v-if="app.deployKey" class="deploy-tag">已部署</span>
+                <div class="app-info-left">
+                  <a-avatar v-if="app.user?.userAvatar" :src="app.user.userAvatar" :size="40" />
+                  <a-avatar v-else :size="40">{{ app.user?.userName?.[0] || 'A' }}</a-avatar>
                 </div>
+                <div class="app-info-right">
+                  <h3 class="app-name">{{ app.appName }}</h3>
+                  <p class="app-creator">{{ app.user?.userName || app.user?.userAccount || '未知' }}</p>
+                </div>
+                <span v-if="app.deployKey" class="deploy-tag">已部署</span>
               </div>
             </div>
           </div>
@@ -233,7 +237,7 @@ onMounted(() => {
               :key="app.id"
               class="app-card"
             >
-              <div class="app-cover" @click="handleChat(app.id!)">
+              <div class="app-cover" @click="handleView(app.id!)">
                 <img v-if="app.cover" :src="app.cover" :alt="app.appName" />
                 <div v-else class="app-cover-placeholder">
                   <span>{{ app.appName?.[0] || 'A' }}</span>
@@ -248,13 +252,15 @@ onMounted(() => {
                 </div>
               </div>
               <div class="app-info">
-                <h3 class="app-name">{{ app.appName }}</h3>
-                <p class="app-desc">{{ app.initPrompt || '无描述' }}</p>
-                <div class="app-footer">
-                  <span v-if="app.user?.userName" class="creator">
-                    by {{ app.user.userName }}
-                  </span>
+                <div class="app-info-left">
+                  <a-avatar v-if="app.user?.userAvatar" :src="app.user.userAvatar" :size="40" />
+                  <a-avatar v-else :size="40">{{ app.user?.userName?.[0] || 'A' }}</a-avatar>
                 </div>
+                <div class="app-info-right">
+                  <h3 class="app-name">{{ app.appName }}</h3>
+                  <p class="app-creator">{{ app.user?.userName || app.user?.userAccount || '未知' }}</p>
+                </div>
+                <span v-if="app.deployKey" class="deploy-tag">已部署</span>
               </div>
             </div>
           </div>
@@ -425,32 +431,46 @@ onMounted(() => {
 
 .app-info {
   padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.app-info-left {
+  flex-shrink: 0;
+}
+
+.app-info-right {
+  flex: 1;
+  min-width: 0;
 }
 
 .app-name {
-  margin: 0 0 8px 0;
-  font-size: 16px;
+  margin: 0 0 4px 0;
+  font-size: 14px;
   color: #333;
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.app-desc {
-  margin: 0 0 8px 0;
+.app-creator {
+  margin: 0;
   font-size: 12px;
   color: #999;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  height: 18px;
 }
 
-.app-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 24px;
+.deploy-tag {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  font-size: 12px;
+  color: #52c41a;
+  background: #f6ffed;
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 
 .app-card {
@@ -508,19 +528,6 @@ onMounted(() => {
 
 .app-cover-overlay :deep(.ant-btn-primary:hover) {
   background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%);
-}
-
-.deploy-tag {
-  font-size: 12px;
-  color: #52c41a;
-  background: #f6ffed;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.creator {
-  font-size: 12px;
-  color: #999;
 }
 
 .pagination-wrapper {
