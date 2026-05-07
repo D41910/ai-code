@@ -351,7 +351,7 @@ onUnmounted(() => {
           <a-tooltip :title="inputDisabled ? '无法在别人的作品下对话哦~' : ''">
             <a-input
               v-model:value="inputMessage"
-              placeholder="输入你的需求，如：帮我生成一个用户管理页面"
+              placeholder="请描述你想生成的网站，越详细效果越好哦"
               :disabled="isGenerating || inputDisabled"
               @pressEnter="sendMessage"
             />
@@ -508,29 +508,31 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   overflow: hidden;
+  padding: 12px;
+  gap: 12px;
 }
 
 .chat-area {
-  width: 40%;
-  min-width: 400px;
+  flex: 2;
   display: flex;
   flex-direction: column;
   background: #fff;
-  border-right: 1px solid #e8e8e8;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 .message {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   max-width: 85%;
 }
 
@@ -544,32 +546,33 @@ onUnmounted(() => {
 }
 
 .message-avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: #f0f0f0;
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 14px;
+  color: #fff;
   flex-shrink: 0;
 }
 
 .message.user .message-avatar {
-  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-  color: #fff;
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
 }
 
 .message-content {
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-radius: 12px;
-  line-height: 1.6;
+  line-height: 1.5;
+  font-size: 14px;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .message.user .message-content {
-  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
   color: #fff;
 }
 
@@ -586,17 +589,11 @@ onUnmounted(() => {
   margin-bottom: 0;
 }
 
-.message.assistant .message-content {
-  background: #f5f5f5;
-  color: #333;
-}
-
 .chat-input-area {
   display: flex;
-  gap: 12px;
-  padding: 16px;
-  border-top: 1px solid #e8e8e8;
-  background: #fff;
+  gap: 10px;
+  padding: 12px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .chat-input-area .ant-input {
@@ -604,10 +601,13 @@ onUnmounted(() => {
 }
 
 .preview-area {
-  flex: 1;
+  flex: 3;
   display: flex;
   flex-direction: column;
   min-width: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .preview-header {
@@ -615,15 +615,14 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #fff;
-  border-bottom: 1px solid #e8e8e8;
+  border-bottom: 1px solid #f0f0f0;
   font-weight: 500;
+  color: #666;
 }
 
 .preview-content {
   flex: 1;
-  padding: 16px;
-  background: #f0f0f0;
+  padding: 12px;
   overflow: hidden;
 }
 
@@ -633,7 +632,6 @@ onUnmounted(() => {
   border: none;
   border-radius: 8px;
   background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .preview-placeholder {
@@ -642,9 +640,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  background: #fafafa;
   border-radius: 8px;
   color: #999;
+  font-size: 14px;
 }
 
 .preview-loading {
@@ -654,18 +653,20 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  background: #fafafa;
   border-radius: 8px;
   color: #666;
 }
 
 .preview-loading p {
-  margin-top: 16px;
+  margin-top: 12px;
+  font-size: 14px;
 }
 
 .typing-text {
   margin-left: 8px;
   color: #999;
+  font-size: 13px;
 }
 
 .app-detail {

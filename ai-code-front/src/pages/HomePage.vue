@@ -11,6 +11,15 @@ const loginUserStore = useLoginUserStore()
 
 const isLogin = computed(() => loginUserStore.loginUser?.userRole !== undefined)
 
+// 快捷提示词示例 - 5条
+const quickPrompts = [
+  '帮我创建一个个人博客网站，包含首页、文章列表页和文章详情页',
+  '生成一个企业内部OA管理系统，包含员工管理、部门管理、考勤打卡',
+  '创建一个在线商城的商品展示页面，包括轮播图、商品列表、购物车',
+  '制作一个数据可视化大屏页面，展示实时数据统计、图表分析',
+  '开发一个在线教育平台，包含课程列表、视屏播放、作业提交',
+]
+
 // 发起应用创建
 const createAppModalVisible = ref(false)
 const createLoading = ref(false)
@@ -30,6 +39,11 @@ const handleMainAction = () => {
   createAppModalVisible.value = true
 }
 
+const handleQuickPrompt = (prompt: string) => {
+  createForm.initPrompt = prompt
+  handleMainAction()
+}
+
 const handleCreateApp = async () => {
   if (!createForm.initPrompt?.trim()) {
     message.warning('请输入应用描述')
@@ -42,9 +56,7 @@ const handleCreateApp = async () => {
       message.success('创建成功')
       createAppModalVisible.value = false
       createForm.initPrompt = ''
-      // 跳转到聊天页面
       router.push({ path: '/app/chat', query: { appId: String(res.data.data) } })
-      // 刷新我的应用列表
       fetchMyApps()
     } else {
       message.error('创建失败：' + res.data.message)
@@ -138,16 +150,16 @@ onMounted(() => {
     <!-- Hero区域 -->
     <div class="hero-section">
       <div class="hero-content">
-        <h1 class="hero-title">不写一行代码，生成完整应用</h1>
-        <p class="hero-desc">基于 AI 智能代码生成技术，让开发变得更简单</p>
+        <h1 class="hero-title">AI 应用生成平台</h1>
+        <p class="hero-desc">一句话轻松创建网站应用</p>
 
         <!-- 主要操作区 -->
         <div class="main-action">
           <a-input-search
             v-model:value="createForm.initPrompt"
-            placeholder="输入你想要的应用描述，如：帮我生成一个用户管理页面"
+            placeholder="帮我创建个人博客网站"
             size="large"
-            style="max-width: 600px"
+            style="max-width: 560px"
             @search="handleMainAction"
           >
             <template #enterButton>
@@ -156,6 +168,39 @@ onMounted(() => {
               </a-button>
             </template>
           </a-input-search>
+        </div>
+
+        <!-- 快捷提示词 - 弹幕风格 2行 -->
+        <div class="quick-prompts">
+          <div class="quick-row">
+            <a-tooltip :title="quickPrompts[0]" placement="top">
+              <button class="quick-item" @click="handleQuickPrompt(quickPrompts[0])">
+                {{ quickPrompts[0].length > 15 ? quickPrompts[0].substring(0, 15) + '...' : quickPrompts[0] }}
+              </button>
+            </a-tooltip>
+            <a-tooltip :title="quickPrompts[1]" placement="top">
+              <button class="quick-item" @click="handleQuickPrompt(quickPrompts[1])">
+                {{ quickPrompts[1].length > 15 ? quickPrompts[1].substring(0, 15) + '...' : quickPrompts[1] }}
+              </button>
+            </a-tooltip>
+          </div>
+          <div class="quick-row">
+            <a-tooltip :title="quickPrompts[2]" placement="top">
+              <button class="quick-item" @click="handleQuickPrompt(quickPrompts[2])">
+                {{ quickPrompts[2].length > 15 ? quickPrompts[2].substring(0, 15) + '...' : quickPrompts[2] }}
+              </button>
+            </a-tooltip>
+            <a-tooltip :title="quickPrompts[3]" placement="top">
+              <button class="quick-item" @click="handleQuickPrompt(quickPrompts[3])">
+                {{ quickPrompts[3].length > 15 ? quickPrompts[3].substring(0, 15) + '...' : quickPrompts[3] }}
+              </button>
+            </a-tooltip>
+            <a-tooltip :title="quickPrompts[4]" placement="top">
+              <button class="quick-item" @click="handleQuickPrompt(quickPrompts[4])">
+                {{ quickPrompts[4].length > 15 ? quickPrompts[4].substring(0, 15) + '...' : quickPrompts[4] }}
+              </button>
+            </a-tooltip>
+          </div>
         </div>
       </div>
     </div>
@@ -305,36 +350,97 @@ onMounted(() => {
 <style scoped>
 .home-page {
   min-height: calc(100vh - 64px - 50px);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 50%, #e8f5e9 100%);
 }
 
 .hero-section {
-  padding: 60px 24px;
+  padding: 60px 24px 50px;
   text-align: center;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, transparent 100%);
 }
 
 .hero-content {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
 .hero-title {
-  font-size: 42px;
+  font-size: 44px;
   font-weight: 700;
-  color: #fff;
-  margin: 0 0 16px 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #00838f;
+  margin: 0 0 14px 0;
+  text-shadow: 0 2px 4px rgba(0, 131, 143, 0.1);
 }
 
 .hero-desc {
   font-size: 18px;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0 0 32px 0;
+  color: #4db6ac;
+  margin: 0 0 36px 0;
 }
 
 .main-action {
   display: flex;
   justify-content: center;
+}
+
+.main-action :deep(.ant-input-search) {
+  border-radius: 24px;
+}
+
+.main-action :deep(.ant-input-search .ant-input) {
+  border-radius: 24px 0 0 24px;
+  padding: 12px 20px;
+  font-size: 15px;
+}
+
+.main-action :deep(.ant-input-search .ant-input-group-addon) {
+  border-radius: 0 24px 24px 0;
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
+  border: none;
+}
+
+.main-action :deep(.ant-input-search .ant-btn-primary) {
+  border-radius: 0 24px 24px 0;
+  height: 48px;
+  padding: 0 32px;
+  font-size: 15px;
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
+  border: none;
+}
+
+/* 快捷提示词 - 弹幕风格 2行 */
+.quick-prompts {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.quick-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-width: 600px;
+}
+
+.quick-item {
+  display: inline-block;
+  padding: 8px 14px;
+  background: rgba(0, 131, 143, 0.1);
+  border: 1px solid rgba(0, 131, 143, 0.25);
+  border-radius: 16px;
+  font-size: 13px;
+  color: #00838f;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.quick-item:hover {
+  background: rgba(0, 131, 143, 0.2);
+  border-color: rgba(0, 131, 143, 0.5);
+  transform: translateY(-2px);
 }
 
 .main-content {
@@ -345,10 +451,10 @@ onMounted(() => {
 
 .section {
   background: #fff;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 24px;
   margin-bottom: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .section-header {
@@ -360,7 +466,8 @@ onMounted(() => {
 
 .section-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
+  font-weight: 600;
   color: #333;
 }
 
@@ -376,37 +483,22 @@ onMounted(() => {
   gap: 16px;
 }
 
-.app-cover {
-  height: 130px;
-  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  cursor: pointer;
-  overflow: hidden;
-}
-
 .app-card {
   border: 1px solid #f0f0f0;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
-  cursor: pointer;
   transition: all 0.3s;
 }
 
 .app-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
 }
 
 .app-cover {
-  height: 120px;
-  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 130px;
   position: relative;
+  overflow: hidden;
   cursor: pointer;
 }
 
@@ -414,7 +506,11 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
+  transition: transform 0.4s;
+}
+
+.app-card:hover .app-cover img {
+  transform: scale(1.05);
 }
 
 .app-cover-placeholder {
@@ -423,14 +519,47 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
   color: #fff;
   font-size: 36px;
   font-weight: 600;
 }
 
+.app-cover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.app-card:hover .app-cover-overlay {
+  opacity: 1;
+}
+
+.app-cover-overlay :deep(.ant-btn) {
+  padding: 4px 12px;
+  font-size: 12px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.95);
+  border-color: transparent;
+  color: #333;
+}
+
+.app-cover-overlay :deep(.ant-btn-primary) {
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
+  color: #fff;
+}
+
 .app-info {
-  padding: 10px 12px;
+  padding: 12px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -449,8 +578,8 @@ onMounted(() => {
 .app-name {
   margin: 0 0 4px 0;
   font-size: 14px;
-  color: #333;
   font-weight: 500;
+  color: #333;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -464,70 +593,13 @@ onMounted(() => {
 
 .deploy-tag {
   position: absolute;
-  bottom: 10px;
+  bottom: 12px;
   right: 12px;
-  font-size: 12px;
+  font-size: 11px;
   color: #52c41a;
   background: #f6ffed;
   padding: 2px 8px;
   border-radius: 4px;
-}
-
-.app-card {
-  border: 1px solid #f0f0f0;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: all 0.3s;
-  position: relative;
-}
-
-.app-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
-
-.app-card:hover .app-cover-overlay {
-  opacity: 1;
-}
-
-.app-cover-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  opacity: 0;
-  transition: opacity 0.3s;
-  border-radius: 0;
-}
-
-.app-cover-overlay :deep(.ant-btn) {
-  padding: 4px 12px;
-  font-size: 12px;
-  height: 28px;
-  background: rgba(255, 255, 255, 0.95);
-  border-color: transparent;
-  color: #333;
-  border-radius: 4px;
-}
-
-.app-cover-overlay :deep(.ant-btn-primary) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-}
-
-.app-cover-overlay :deep(.ant-btn:hover) {
-  transform: scale(1.05);
-  opacity: 1;
-}
-
-.app-cover-overlay :deep(.ant-btn-primary:hover) {
-  background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%);
 }
 
 .pagination-wrapper {
