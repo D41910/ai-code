@@ -175,29 +175,29 @@ onMounted(() => {
           <div class="quick-row">
             <a-tooltip :title="quickPrompts[0]" placement="top">
               <button class="quick-item" @click="handleQuickPrompt(quickPrompts[0])">
-                {{ quickPrompts[0].length > 15 ? quickPrompts[0].substring(0, 15) + '...' : quickPrompts[0] }}
+                {{ quickPrompts[0].length > 12 ? quickPrompts[0].substring(0, 12) + '...' : quickPrompts[0] }}
               </button>
             </a-tooltip>
             <a-tooltip :title="quickPrompts[1]" placement="top">
               <button class="quick-item" @click="handleQuickPrompt(quickPrompts[1])">
-                {{ quickPrompts[1].length > 15 ? quickPrompts[1].substring(0, 15) + '...' : quickPrompts[1] }}
+                {{ quickPrompts[1].length > 12 ? quickPrompts[1].substring(0, 12) + '...' : quickPrompts[1] }}
               </button>
             </a-tooltip>
           </div>
           <div class="quick-row">
             <a-tooltip :title="quickPrompts[2]" placement="top">
               <button class="quick-item" @click="handleQuickPrompt(quickPrompts[2])">
-                {{ quickPrompts[2].length > 15 ? quickPrompts[2].substring(0, 15) + '...' : quickPrompts[2] }}
+                {{ quickPrompts[2].length > 12 ? quickPrompts[2].substring(0, 12) + '...' : quickPrompts[2] }}
               </button>
             </a-tooltip>
             <a-tooltip :title="quickPrompts[3]" placement="top">
               <button class="quick-item" @click="handleQuickPrompt(quickPrompts[3])">
-                {{ quickPrompts[3].length > 15 ? quickPrompts[3].substring(0, 15) + '...' : quickPrompts[3] }}
+                {{ quickPrompts[3].length > 12 ? quickPrompts[3].substring(0, 12) + '...' : quickPrompts[3] }}
               </button>
             </a-tooltip>
             <a-tooltip :title="quickPrompts[4]" placement="top">
               <button class="quick-item" @click="handleQuickPrompt(quickPrompts[4])">
-                {{ quickPrompts[4].length > 15 ? quickPrompts[4].substring(0, 15) + '...' : quickPrompts[4] }}
+                {{ quickPrompts[4].length > 12 ? quickPrompts[4].substring(0, 12) + '...' : quickPrompts[4] }}
               </button>
             </a-tooltip>
           </div>
@@ -410,28 +410,27 @@ onMounted(() => {
 
 /* 快捷提示词 - 弹幕风格 2行 */
 .quick-prompts {
-  margin-top: 32px;
+  margin-top: 28px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
 }
 
 .quick-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   gap: 10px;
-  max-width: 600px;
 }
 
 .quick-item {
   display: inline-block;
-  padding: 8px 14px;
+  padding: 6px 12px;
   background: rgba(0, 131, 143, 0.1);
   border: 1px solid rgba(0, 131, 143, 0.25);
-  border-radius: 16px;
-  font-size: 13px;
+  border-radius: 14px;
+  font-size: 12px;
   color: #00838f;
   cursor: pointer;
   transition: all 0.3s;
