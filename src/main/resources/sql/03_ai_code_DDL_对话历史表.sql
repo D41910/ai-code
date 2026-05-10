@@ -1,9 +1,10 @@
 -- 对话历史表
+DROP  TABLE IF EXISTS chat_history;
 create table chat_history
 (
     id          bigint auto_increment comment 'id' primary key,
     message     text                               not null comment '消息',
-    messageType varchar(32)                        not null comment 'user/ai',
+    messageType smallint                           not null comment '1-user,2-ai',
     appId       bigint                             not null comment '应用id',
     userId      bigint                             not null comment '创建用户id',
     createTime  datetime default CURRENT_TIMESTAMP not null comment '创建时间',

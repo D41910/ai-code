@@ -166,8 +166,8 @@ public class AppController {
         if (appQueryDTO.getPageNum() <= 0) {
             appQueryDTO.setPageNum(1);
         }
-        if (appQueryDTO.getPaseSize() <= 0) {
-            appQueryDTO.setPaseSize(10);
+        if (appQueryDTO.getPageSize() <= 0) {
+            appQueryDTO.setPageSize(10);
         }
         Page<AppVO> page = appService.listOneselfByPage(appQueryDTO, request);
         return ResultUtils.success(page);
@@ -185,8 +185,8 @@ public class AppController {
         if (appQueryDTO.getPageNum() <= 0) {
             appQueryDTO.setPageNum(1);
         }
-        if (appQueryDTO.getPaseSize() <= 0) {
-            appQueryDTO.setPaseSize(10);
+        if (appQueryDTO.getPageSize() <= 0) {
+            appQueryDTO.setPageSize(10);
         }
         Page<AppVO> page = appService.listFeaturedByPage(appQueryDTO);
         return ResultUtils.success(page);
@@ -235,8 +235,8 @@ public class AppController {
         if (appQueryDTO.getPageNum() <= 0) {
             appQueryDTO.setPageNum(1);
         }
-        if (appQueryDTO.getPaseSize() <= 0) {
-            appQueryDTO.setPaseSize(10);
+        if (appQueryDTO.getPageSize() <= 0) {
+            appQueryDTO.setPageSize(10);
         }
         Page<AppVO> page = appService.adminListByPage(appQueryDTO);
         return ResultUtils.success(page);

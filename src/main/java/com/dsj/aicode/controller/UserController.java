@@ -209,8 +209,8 @@ public class UserController {
         if(userQueryDTO.getPageNum() <= 0){
             userQueryDTO.setPageNum(1);
         }
-        if (userQueryDTO.getPaseSize() <= 0){
-            userQueryDTO.setPaseSize(10);
+        if (userQueryDTO.getPageSize() <= 0){
+            userQueryDTO.setPageSize(10);
         }
         return ResultUtils.success(userService.listUserVOByPage(userQueryDTO));
     }

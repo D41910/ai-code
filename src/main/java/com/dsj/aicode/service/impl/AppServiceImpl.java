@@ -20,10 +20,12 @@ import com.dsj.aicode.model.dto.AppUpdateDTO;
 import com.dsj.aicode.model.entity.App;
 import com.dsj.aicode.model.entity.User;
 import com.dsj.aicode.model.enums.CodeGenTypeEnum;
+import com.dsj.aicode.model.enums.MessageTypeEnum;
 import com.dsj.aicode.model.enums.UserRoleEnum;
 import com.dsj.aicode.model.vo.AppVO;
 import com.dsj.aicode.model.vo.UserVO;
 import com.dsj.aicode.service.AppService;
+import com.dsj.aicode.service.ChatHistoryService;
 import com.dsj.aicode.service.UserService;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -56,6 +58,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
     private final UserService userService;
     private final AiCodeGeneratorFacade aiCodeGeneratorFacade;
+    private final ChatHistoryService chatHistoryService;
 
     @Override
     public Flux<String> chatToGenCode(Long appId, String message, User loginUser) {
@@ -71,7 +74,32 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         String codeGenTypeStr = app.getCodeGenType();
         CodeGenTypeEnum codeGenTypeEnum = CodeGenTypeEnum.getEnumByValue(codeGenTypeStr);
         ThrowUtils.throwIf(codeGenTypeEnum == null, ErrorCode.SYSTEM_ERROR, "不支持的代码生成类型");
-        return aiCodeGeneratorFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
+
+        //保存用户消息
+        chatHistoryService.addChatMessage(appId,message, MessageTypeEnum.USER.getValue(), loginUser.getId());
+
+        // 构建带错误处理的流式响应
+        Flux<String> flux = aiCodeGeneratorFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
+
+        StringBuilder aiResponseBuilder = new StringBuilder();
+        return flux
+                .map(chunk -> {
+                    //收集AI响应内容
+                    aiResponseBuilder.append(chunk);
+                    return chunk;
+                })
+                .doOnError(error -> {
+                    // AI生成失败，保存错误信息
+                    String errorMessage = "AI回复失败" + error.getMessage();
+                    chatHistoryService.addChatMessage(appId, errorMessage, MessageTypeEnum.AI.getValue(), loginUser.getId());
+                })
+                .doOnComplete(() -> {
+                    // AI生成完成，保存AI消息
+                    String fullContent = aiResponseBuilder.toString();
+                    if (StrUtil.isNotBlank(fullContent)) {
+                        chatHistoryService.addChatMessage(appId, fullContent, MessageTypeEnum.AI.getValue(), loginUser.getId());
+                    }
+                });
     }
 
 
@@ -129,6 +157,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         // 校验权限：只能删除自己的应用
         ThrowUtils.throwIf(!app.getUserId().equals(loginUser.getId()), ErrorCode.NO_AUTH_ERROR);
 
+        // 删除该应用的对话历史
+        chatHistoryService.deleteByAppId(id);
+
         // 逻辑删除
         app.setIsDelete(1);
         return this.updateById(app);
@@ -154,7 +185,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         appQueryDTO.setUserId(loginUser.getId());
 
         // 分页查询，每页最多20个
-        int pageSize = appQueryDTO.getPaseSize() <= 0 ? 10 : Math.min(appQueryDTO.getPaseSize(), 20);
+        int pageSize = appQueryDTO.getPageSize() <= 0 ? 10 : Math.min(appQueryDTO.getPageSize(), 20);
         int pageNum = appQueryDTO.getPageNum() <= 0 ? 1 : appQueryDTO.getPageNum();
 
         QueryWrapper queryWrapper = getQueryWrapper(appQueryDTO);
@@ -172,7 +203,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         ThrowUtils.throwIf(ObjUtil.isEmpty(appQueryDTO), ErrorCode.PARAMS_ERROR);
 
         // 分页查询，每页最多20个
-        int pageSize = appQueryDTO.getPaseSize() <= 0 ? 10 : Math.min(appQueryDTO.getPaseSize(), 20);
+        int pageSize = appQueryDTO.getPageSize() <= 0 ? 10 : Math.min(appQueryDTO.getPageSize(), 20);
         int pageNum = appQueryDTO.getPageNum() <= 0 ? 1 : appQueryDTO.getPageNum();
 
         appQueryDTO.setPriority(AppConstant.GOOD_APP_PRIORITY);
@@ -195,6 +226,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         // 查询应用
         App app = this.getById(id);
         ThrowUtils.throwIf(ObjUtil.isEmpty(app), ErrorCode.NOT_FOUND_ERROR);
+
+        // 删除该应用的对话历史
+        chatHistoryService.deleteByAppId(id);
 
         // 逻辑删除
         app.setIsDelete(1);
@@ -233,7 +267,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         QueryWrapper queryWrapper = getQueryWrapper(appQueryDTO);
         // 分页查询，pageSize为0或负数时不限制
         int pageNum = appQueryDTO.getPageNum() <= 0 ? 1 : appQueryDTO.getPageNum();
-        int pageSize = appQueryDTO.getPaseSize() <= 0 ? 10 : appQueryDTO.getPaseSize();
+        int pageSize = appQueryDTO.getPageSize() <= 0 ? 10 : appQueryDTO.getPageSize();
 
         Page<App> pageApps = this.page(Page.of(pageNum, pageSize), queryWrapper);
         List<AppVO> appVOList = this.getAppVOList(pageApps.getRecords());
