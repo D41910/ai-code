@@ -297,7 +297,31 @@ const sendMessage = async () => {
 
 // 生成代码 - 使用 EventSource 处理流式响应
 const generateCode = async (userMessage: string, aiMessageIndex: number) => {
-  let streamCompleted = false
+  let fullContent = ''  // 存储完整内容
+  let displayedContent = ''  // 当前显示的内容
+  let typingTimer: ReturnType<typeof setTimeout> | null = null
+  let isDone = false  // 是否已收到done事件
+
+  // 打字机效果：逐字符显示内容，固定30ms间隔（与豆包一致）
+  const startTypingEffect = () => {
+    typingTimer = setTimeout(() => {
+      // 显示下一个字符
+      if (displayedContent.length < fullContent.length) {
+        displayedContent += fullContent[displayedContent.length]
+        chatMessages.value[aiMessageIndex].content = displayedContent
+        scrollToBottom()
+      }
+
+      // 如果还没显示完，继续打字机；如果已显示完但还没done，继续等待
+      if (displayedContent.length < fullContent.length || !isDone) {
+        startTypingEffect()
+      } else {
+        // 显示完成且已收到done，刷新预览
+        typingTimer = null
+        fetchAppDetail()
+      }
+    }, 30) // 固定30ms间隔，与豆包一致
+  }
 
   try {
     // 构建URL参数
@@ -310,13 +334,15 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
 
     // 创建 EventSource 连接
     eventSource = new EventSource(url)
-    let fullContent = ''
+
+    // 启动打字机效果
+    startTypingEffect()
 
     // 处理接收到的消息
     eventSource.onmessage = function (event) {
-      if (streamCompleted) return
+      if (isDone) return
 
-      // 跳过空消息和done事件（done事件由单独的监听器处理）
+      // 跳过空消息和done事件
       if (!event.data || event.data === 'done') {
         return
       }
@@ -326,48 +352,41 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
         const parsed = JSON.parse(event.data)
         const content = parsed.d
 
-        // 拼接内容
+        // 拼接内容到完整内容
         if (content !== undefined && content !== null) {
           fullContent += content
-          chatMessages.value[aiMessageIndex].content = fullContent
-          scrollToBottom()
         }
       } catch (error) {
-        // 非JSON格式的数据直接拼接（如纯文本片段）
+        // 非JSON格式的数据直接拼接
         fullContent += event.data
-        chatMessages.value[aiMessageIndex].content = fullContent
-        scrollToBottom()
       }
     }
 
     // 处理done事件
     eventSource.addEventListener('done', function () {
-      if (streamCompleted) return
+      if (isDone) return
 
-      streamCompleted = true
+      isDone = true
       isGenerating.value = false
       closeEventSource()
-
-      // 延迟更新预览，确保后端已完成处理
-      setTimeout(async () => {
-        await fetchAppDetail()
-      }, 3000)
+      // 不再立即停止打字机，让打字机继续显示剩余内容
     })
 
     // 处理错误
     eventSource.onerror = function () {
-      // 如果已经完成或不在生成中，直接返回
-      if (streamCompleted || !isGenerating.value) return
+      if (isDone || !isGenerating.value) return
 
-      // 标记为完成状态
-      streamCompleted = true
+      isDone = true
       isGenerating.value = false
       closeEventSource()
 
-      // 延迟更新预览
-      setTimeout(async () => {
-        await fetchAppDetail()
-      }, 3000)
+      if (typingTimer) {
+        clearTimeout(typingTimer)
+        typingTimer = null
+      }
+      displayedContent = fullContent
+      chatMessages.value[aiMessageIndex].content = fullContent
+      fetchAppDetail()
     }
   } catch (err) {
     handleError(err, aiMessageIndex)
@@ -453,12 +472,6 @@ onUnmounted(() => {
             <div class="message-content">
               <MarkdownRenderer v-if="msg.role === 'assistant'" :content="msg.content" />
               <span v-else>{{ msg.content }}</span>
-            </div>
-          </div>
-          <div v-if="isGenerating && chatMessages[chatMessages.length - 1]?.role === 'assistant'" class="message assistant">
-            <div class="message-content">
-              <a-spin size="small" />
-              <span class="typing-text">正在生成代码...</span>
             </div>
           </div>
         </div>
