@@ -59,12 +59,13 @@ const deployUrl = ref('')
 const scrollToBottom = () => {
   nextTick(() => {
     if (chatMessagesRef.value) {
+      // 直接设置 scrollTop，不使用平滑滚动
       chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
     }
   })
 }
 
-// 使用节流避免频繁滚动
+// 使用节流避免频繁滚动（但滚动本身是立即的）
 let scrollTimeout: ReturnType<typeof setTimeout> | null = null
 const smoothScrollToBottom = () => {
   if (scrollTimeout) return
@@ -127,9 +128,11 @@ const loadChatHistory = async (isLoadMore = false) => {
         if (isLoadMore) {
           // 加载更多时，将历史消息添加到列表开头
           chatMessages.value.unshift(...historyMessages)
+          // 加载更多后保持当前位置
         } else {
-          // 初始加载，直接设置消息列表
+          // 初始加载，直接设置消息列表并滚动到底部
           chatMessages.value = historyMessages
+          scrollToBottom()
         }
         // 更新游标为最老消息的创建时间
         lastCreateTime.value = chatHistories[0]?.createTime
@@ -137,6 +140,8 @@ const loadChatHistory = async (isLoadMore = false) => {
         hasMoreHistory.value = chatHistories.length === 10
       } else {
         hasMoreHistory.value = false
+        // 没有历史记录时也滚动到底部
+        scrollToBottom()
       }
       historyLoaded.value = true
     }
@@ -276,7 +281,10 @@ const sendMessage = async () => {
 
   const userMessage = inputMessage.value.trim()
   chatMessages.value.push({ role: 'user', content: userMessage })
-  smoothScrollToBottom()
+  // 发送消息后立即滚动到底部
+  nextTick(() => {
+    scrollToBottom()
+  })
   inputMessage.value = ''
   isGenerating.value = true
 
@@ -322,13 +330,13 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
         if (content !== undefined && content !== null) {
           fullContent += content
           chatMessages.value[aiMessageIndex].content = fullContent
-          smoothScrollToBottom()
+          scrollToBottom()
         }
       } catch (error) {
         // 非JSON格式的数据直接拼接（如纯文本片段）
         fullContent += event.data
         chatMessages.value[aiMessageIndex].content = fullContent
-        smoothScrollToBottom()
+        scrollToBottom()
       }
     }
 
@@ -638,7 +646,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  scroll-behavior: smooth;
 }
 
 /* 自定义滚动条样式 */
