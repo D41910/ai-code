@@ -81,6 +81,12 @@ declare namespace API {
     message?: string
   }
 
+  type BaseResponsePageChatHistory = {
+    code?: number
+    data?: PageChatHistory
+    message?: string
+  }
+
   type BaseResponsePageUserVO = {
     code?: number
     data?: PageUserVO
@@ -105,6 +111,30 @@ declare namespace API {
     message?: string
   }
 
+  type ChatHistory = {
+    id?: string
+    message?: string
+    appId?: string
+    userId?: string
+    messageType?: number
+    createTime?: string
+    updateTime?: string
+    isDelete?: number
+  }
+
+  type ChatHistoryQueryDTO = {
+    pageNum?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    id?: string
+    message?: string
+    messageType?: number
+    appId?: string
+    userId?: string
+    lastCreateTime?: string
+  }
+
   type chatToGenCodeParams = {
     appId: string
     message: string
@@ -127,15 +157,30 @@ declare namespace API {
   }
 
   type getUserByIdParams = {
-    id: number
+    id: string
   }
 
   type getUserVOByIdParams = {
-    id: number
+    id: string
+  }
+
+  type listAppChatHistoryParams = {
+    appId: string
+    pageSize?: number
+    lastCreateTime?: string
   }
 
   type PageAppVO = {
     records?: AppVO[]
+    pageNumber?: number
+    pageSize?: number
+    totalPage?: number
+    totalRow?: number
+    optimizeCountQuery?: boolean
+  }
+
+  type PageChatHistory = {
+    records?: ChatHistory[]
     pageNumber?: number
     pageSize?: number
     totalPage?: number
@@ -154,8 +199,12 @@ declare namespace API {
 
   type ServerSentEventString = true
 
+  type serveStaticResourceParams = {
+    deploy: string
+  }
+
   type User = {
-    id?: number
+    id?: string
     userAccount?: string
     userPassword?: string
     userName?: string
@@ -186,7 +235,7 @@ declare namespace API {
     paseSize?: number
     sortField?: string
     sortOrder?: string
-    id?: number
+    id?: string
     userName?: string
     userAccount?: string
     userProfile?: string
@@ -202,7 +251,7 @@ declare namespace API {
   }
 
   type UserUpdateDTO = {
-    id?: number
+    id?: string
     userAccount?: string
     userPassword?: string
     userName?: string
@@ -212,7 +261,7 @@ declare namespace API {
   }
 
   type UserVO = {
-    id?: number
+    id?: string
     userAccount?: string
     userName?: string
     userAvatar?: string
