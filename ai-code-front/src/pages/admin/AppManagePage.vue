@@ -194,11 +194,17 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="app-manage-container">
-    <div class="table-header">
-      <h2>应用管理</h2>
+  <div class="manage-page">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">应用管理</h1>
+        <p class="page-desc">管理系统应用信息</p>
+      </div>
     </div>
-    <div class="search-container">
+
+    <!-- 搜索区域 -->
+    <div class="search-card">
       <a-space :size="12">
         <a-input
           v-model:value="filterAppName"
@@ -207,73 +213,76 @@ onMounted(() => {
           allow-clear
           @pressEnter="doSearch"
         />
-        <a-button type="primary" @click="doSearch">搜索</a-button>
-        <a-button @click="handleReset">重置</a-button>
+        <a-button class="btn-primary" @click="doSearch">搜索</a-button>
+        <a-button class="btn-default" @click="handleReset">重置</a-button>
       </a-space>
     </div>
-    <a-divider />
-    <a-table
-      :columns="columns"
-      :data-source="data"
-      :loading="loading.table"
-      :pagination="false"
-      :scroll="{ x: 900 }"
-      row-key="id"
-    >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'id'">
-          <a-tooltip :title="record.id" @click="copyToClipboard(String(record.id) || '')">
-            <span class="cell-text">{{ record.id }}</span>
-          </a-tooltip>
+
+    <!-- 表格区域 -->
+    <div class="table-card">
+      <a-table
+        :columns="columns"
+        :data-source="data"
+        :loading="loading.table"
+        :pagination="false"
+        :scroll="{ x: 900 }"
+        row-key="id"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'id'">
+            <a-tooltip :title="record.id" @click="copyToClipboard(String(record.id) || '')">
+              <span class="cell-text">{{ record.id }}</span>
+            </a-tooltip>
+          </template>
+          <template v-else-if="column.key === 'appName'">
+            <a-tooltip :title="record.appName" @click="copyToClipboard(record.appName || '')">
+              <span class="cell-text">{{ record.appName }}</span>
+            </a-tooltip>
+          </template>
+          <template v-else-if="column.key === 'cover'">
+            <a-avatar v-if="record.cover" :src="record.cover" shape="square" />
+            <a-avatar v-else shape="square" class="default-avatar">无</a-avatar>
+          </template>
+          <template v-else-if="column.key === 'initPrompt'">
+            <a-tooltip :title="record.initPrompt" @click="copyToClipboard(record.initPrompt || '')">
+              <span class="cell-text">{{ record.initPrompt }}</span>
+            </a-tooltip>
+          </template>
+          <template v-else-if="column.key === 'codeGenType'">
+            <span class="cell-text">{{ formatCodeGenType(record.codeGenType) }}</span>
+          </template>
+          <template v-else-if="column.key === 'deployKey'">
+            <a-tooltip :title="record.deployKey" @click="copyToClipboard(record.deployKey || '')">
+              <span class="cell-text">{{ record.deployKey }}</span>
+            </a-tooltip>
+          </template>
+          <template v-else-if="column.key === 'priority'">
+            <span class="cell-text">{{ record.priority }}</span>
+          </template>
+          <template v-else-if="column.key === 'user'">
+            <span class="cell-text">{{ record.user?.userName || record.user?.userAccount || '-' }}</span>
+          </template>
+          <template v-else-if="column.key === 'action'">
+            <a-space>
+              <a-button class="action-btn" @click="handleChat(record)">聊天</a-button>
+              <a-button class="action-btn" @click="handleEdit(record)">编辑</a-button>
+              <a-button class="action-btn danger" @click="handleDelete(String(record.id))">删除</a-button>
+            </a-space>
+          </template>
         </template>
-        <template v-else-if="column.key === 'appName'">
-          <a-tooltip :title="record.appName" @click="copyToClipboard(record.appName || '')">
-            <span class="cell-text">{{ record.appName }}</span>
-          </a-tooltip>
-        </template>
-        <template v-else-if="column.key === 'cover'">
-          <a-avatar v-if="record.cover" :src="record.cover" shape="square" />
-          <a-avatar v-else shape="square">无</a-avatar>
-        </template>
-        <template v-else-if="column.key === 'initPrompt'">
-          <a-tooltip :title="record.initPrompt" @click="copyToClipboard(record.initPrompt || '')">
-            <span class="cell-text">{{ record.initPrompt }}</span>
-          </a-tooltip>
-        </template>
-        <template v-else-if="column.key === 'codeGenType'">
-          <span class="cell-text">{{ formatCodeGenType(record.codeGenType) }}</span>
-        </template>
-        <template v-else-if="column.key === 'deployKey'">
-          <a-tooltip :title="record.deployKey" @click="copyToClipboard(record.deployKey || '')">
-            <span class="cell-text">{{ record.deployKey }}</span>
-          </a-tooltip>
-        </template>
-        <template v-else-if="column.key === 'priority'">
-          <span class="cell-text">{{ record.priority }}</span>
-        </template>
-        <template v-else-if="column.key === 'user'">
-          <span class="cell-text">{{ record.user?.userName || record.user?.userAccount || '-' }}</span>
-        </template>
-        <template v-else-if="column.key === 'action'">
-          <a-space>
-            <a-button type="link" size="small" @click="handleChat(record)">聊天</a-button>
-            <a-button type="link" size="small" @click="handleEdit(record)">编辑</a-button>
-            <a-button type="link" danger size="small" @click="handleDelete(String(record.id))">删除</a-button>
-          </a-space>
-        </template>
-      </template>
-    </a-table>
-    <div class="pagination-container">
-      <a-pagination
-        v-model:current="current"
-        v-model:page-size="pageSize"
-        :total="total"
-        :show-size-changer="true"
-        :show-quick-jumper="true"
-        :page-size-options="['10', '20', '50', '100']"
-        :show-total="(total: number) => `共 ${total} 条`"
-        @change="fetchData"
-      />
+      </a-table>
+      <div class="pagination-wrapper">
+        <a-pagination
+          v-model:current="current"
+          v-model:page-size="pageSize"
+          :total="total"
+          :show-size-changer="true"
+          :show-quick-jumper="true"
+          :page-size-options="['10', '20', '50', '100']"
+          :show-total="(total: number) => `共 ${total} 条`"
+          @change="fetchData"
+        />
+      </div>
     </div>
 
     <!-- 编辑弹窗 -->
@@ -301,31 +310,80 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.app-manage-container {
+.manage-page {
   padding: 24px;
   min-height: calc(100vh - 64px - 50px);
+  background: #f0f2f5;
 }
 
-.table-header {
-  margin-bottom: 16px;
+/* 页面标题 */
+.page-header {
+  margin-bottom: 24px;
 }
 
-.table-header h2 {
+.header-content {
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
+  padding: 24px 32px;
+  border-radius: 12px;
+}
+
+.page-title {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.page-desc {
   margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
 }
 
-.search-container {
+/* 搜索区域 */
+.search-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
   margin-bottom: 16px;
-  padding: 16px;
-  background: #fafafa;
-  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
-  padding-bottom: 24px;
+:deep(.ant-input:hover) {
+  border-color: #00bcd4;
+}
+
+:deep(.ant-input:focus) {
+  border-color: #00bcd4;
+  box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.1);
+}
+
+.btn-primary {
+  color: #fff;
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
+  border: none;
+  border-radius: 6px;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-default {
+  border-radius: 6px;
+}
+
+.btn-default:hover {
+  color: #00838f;
+  border-color: #00838f;
+}
+
+/* 表格区域 */
+.table-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .cell-text {
@@ -335,9 +393,51 @@ onMounted(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
+  color: #333;
 }
 
 .cell-text:hover {
-  color: #1890ff;
+  color: #00bcd4;
+}
+
+.default-avatar {
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
+  color: #fff;
+}
+
+.action-btn {
+  color: #00838f;
+  font-size: 13px;
+  padding: 4px 8px;
+  height: auto;
+}
+
+.action-btn:hover {
+  color: #006064;
+  background: rgba(0, 131, 143, 0.1);
+}
+
+.action-btn.danger {
+  color: #ff4d4f;
+}
+
+.action-btn.danger:hover {
+  color: #ff7875;
+  background: rgba(255, 77, 79, 0.1);
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-bottom: 8px;
+}
+
+:deep(.ant-pagination-item-active) {
+  border-color: #00bcd4;
+}
+
+:deep(.ant-pagination-item-active a) {
+  color: #00bcd4;
 }
 </style>

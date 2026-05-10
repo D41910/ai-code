@@ -212,11 +212,17 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="user-manage-container">
-    <div class="table-header">
-      <h2>用户管理</h2>
+  <div class="manage-page">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">用户管理</h1>
+        <p class="page-desc">管理系统用户信息</p>
+      </div>
     </div>
-    <div class="search-container">
+
+    <!-- 搜索区域 -->
+    <div class="search-card">
       <a-space :size="12">
         <a-select
           v-model:value="filterField"
@@ -250,63 +256,66 @@ onMounted(() => {
           format="YYYY-MM-DD HH:mm:ss"
           :placeholder="['开始时间', '结束时间']"
         />
-        <a-button type="primary" @click="doSearch">搜索</a-button>
-        <a-button @click="filterField = null; filterValue = null; doSearch()">重置</a-button>
+        <a-button class="btn-primary" @click="doSearch">搜索</a-button>
+        <a-button class="btn-default" @click="filterField = null; filterValue = null; doSearch()">重置</a-button>
       </a-space>
     </div>
-    <a-divider />
-    <a-table
-      :columns="columns"
-      :data-source="data"
-      :loading="loading.table"
-      :pagination="false"
-      :scroll="{ x: 760 }"
-      row-key="id"
-    >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'userAccount'">
-          <a-tooltip :title="record.userAccount" @click="copyToClipboard(record.userAccount || '')">
-            <span class="cell-text">{{ record.userAccount }}</span>
-          </a-tooltip>
+
+    <!-- 表格区域 -->
+    <div class="table-card">
+      <a-table
+        :columns="columns"
+        :data-source="data"
+        :loading="loading.table"
+        :pagination="false"
+        :scroll="{ x: 760 }"
+        row-key="id"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'userAccount'">
+            <a-tooltip :title="record.userAccount" @click="copyToClipboard(record.userAccount || '')">
+              <span class="cell-text">{{ record.userAccount }}</span>
+            </a-tooltip>
+          </template>
+          <template v-else-if="column.key === 'userName'">
+            <a-tooltip :title="record.userName" @click="copyToClipboard(record.userName || '')">
+              <span class="cell-text">{{ record.userName }}</span>
+            </a-tooltip>
+          </template>
+          <template v-else-if="column.key === 'userAvatar'">
+            <a-avatar v-if="record.userAvatar" :src="record.userAvatar" />
+            <a-avatar v-else class="default-avatar">{{ record.userName?.[0] || '无' }}</a-avatar>
+          </template>
+          <template v-else-if="column.key === 'userProfile'">
+            <a-tooltip :title="record.userProfile" @click="copyToClipboard(record.userProfile || '')">
+              <span class="cell-text">{{ record.userProfile }}</span>
+            </a-tooltip>
+          </template>
+          <template v-else-if="column.key === 'userRole'">
+            <a-tag :color="record.userRole === 1 ? 'blue' : 'green'">
+              {{ record.userRole === 1 ? '管理员' : '用户' }}
+            </a-tag>
+          </template>
+          <template v-else-if="column.key === 'action'">
+            <a-space>
+              <a-button class="action-btn" @click="handleEdit(record)">编辑</a-button>
+              <a-button class="action-btn danger" @click="handleDelete(record.id!)">删除</a-button>
+            </a-space>
+          </template>
         </template>
-        <template v-else-if="column.key === 'userName'">
-          <a-tooltip :title="record.userName" @click="copyToClipboard(record.userName || '')">
-            <span class="cell-text">{{ record.userName }}</span>
-          </a-tooltip>
-        </template>
-        <template v-else-if="column.key === 'userAvatar'">
-          <a-avatar v-if="record.userAvatar" :src="record.userAvatar" />
-          <a-avatar v-else>{{ record.userName?.[0] || '无' }}</a-avatar>
-        </template>
-        <template v-else-if="column.key === 'userProfile'">
-          <a-tooltip :title="record.userProfile" @click="copyToClipboard(record.userProfile || '')">
-            <span class="cell-text">{{ record.userProfile }}</span>
-          </a-tooltip>
-        </template>
-        <template v-else-if="column.key === 'userRole'">
-          <a-tag :color="record.userRole === 1 ? 'blue' : 'green'">
-            {{ record.userRole === 1 ? '管理员' : '用户' }}
-          </a-tag>
-        </template>
-        <template v-else-if="column.key === 'action'">
-          <a-space>
-            <a-button type="link" size="small" @click="handleEdit(record)">编辑</a-button>
-            <a-button type="link" danger size="small" @click="handleDelete(record.id!)">删除</a-button>
-          </a-space>
-        </template>
-      </template>
-    </a-table>
-    <div class="pagination-container">
-      <a-pagination
-        v-model:current="current"
-        v-model:page-size="pageSize"
-        :total="total"
-        :show-size-changer="true"
-        :show-quick-jumper="true"
-        :page-size-options="['10', '20', '50', '100']"
-        :show-total="(total: number) => `共 ${total} 条`"
-        @change="fetchData"
-      />
+      </a-table>
+      <div class="pagination-wrapper">
+        <a-pagination
+          v-model:current="current"
+          v-model:page-size="pageSize"
+          :total="total"
+          :show-size-changer="true"
+          :show-quick-jumper="true"
+          :page-size-options="['10', '20', '50', '100']"
+          :show-total="(total: number) => `共 ${total} 条`"
+          @change="fetchData"
+        />
+      </div>
     </div>
 
     <!-- 编辑弹窗 -->
@@ -341,31 +350,89 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.user-manage-container {
+.manage-page {
   padding: 24px;
   min-height: calc(100vh - 64px - 50px);
+  background: #f0f2f5;
 }
 
-.table-header {
-  margin-bottom: 16px;
+/* 页面标题 */
+.page-header {
+  margin-bottom: 24px;
 }
 
-.table-header h2 {
+.header-content {
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
+  padding: 24px 32px;
+  border-radius: 12px;
+}
+
+.page-title {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.page-desc {
   margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
 }
 
-.search-container {
+/* 搜索区域 */
+.search-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
   margin-bottom: 16px;
-  padding: 16px;
-  background: #fafafa;
-  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
-  padding-bottom: 24px;
+:deep(.ant-select:not(.ant-select-disabled):hover .ant-select-selector) {
+  border-color: #00bcd4;
+}
+
+:deep(.ant-select-focused .ant-select-selector) {
+  border-color: #00bcd4 !important;
+  box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.1) !important;
+}
+
+:deep(.ant-input:hover) {
+  border-color: #00bcd4;
+}
+
+:deep(.ant-input:focus) {
+  border-color: #00bcd4;
+  box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.1);
+}
+
+.btn-primary {
+  color: #fff;
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
+  border: none;
+  border-radius: 6px;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-default {
+  border-radius: 6px;
+}
+
+.btn-default:hover {
+  color: #00838f;
+  border-color: #00838f;
+}
+
+/* 表格区域 */
+.table-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .cell-text {
@@ -375,9 +442,51 @@ onMounted(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
+  color: #333;
 }
 
 .cell-text:hover {
-  color: #1890ff;
+  color: #00bcd4;
+}
+
+.default-avatar {
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
+  color: #fff;
+}
+
+.action-btn {
+  color: #00838f;
+  font-size: 13px;
+  padding: 4px 8px;
+  height: auto;
+}
+
+.action-btn:hover {
+  color: #006064;
+  background: rgba(0, 131, 143, 0.1);
+}
+
+.action-btn.danger {
+  color: #ff4d4f;
+}
+
+.action-btn.danger:hover {
+  color: #ff7875;
+  background: rgba(255, 77, 79, 0.1);
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-bottom: 8px;
+}
+
+:deep(.ant-pagination-item-active) {
+  border-color: #00bcd4;
+}
+
+:deep(.ant-pagination-item-active a) {
+  color: #00bcd4;
 }
 </style>

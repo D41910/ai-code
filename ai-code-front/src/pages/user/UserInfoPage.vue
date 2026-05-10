@@ -105,41 +105,49 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="user-info-container">
-    <div class="user-info-card">
+  <div class="user-info-page">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">个人中心</h1>
+        <p class="page-desc">查看和修改个人信息</p>
+      </div>
+    </div>
+
+    <!-- 用户信息卡片 -->
+    <div class="info-card">
       <div class="card-header">
         <h2>个人信息</h2>
+        <a-button class="edit-btn" @click="handleEdit">编辑资料</a-button>
       </div>
 
       <div class="info-content">
         <div class="avatar-section">
-          <a-avatar :size="100" :src="userInfo.userAvatar">
+          <a-avatar v-if="userInfo.userAvatar" :src="userInfo.userAvatar" :size="100" class="user-avatar" />
+          <a-avatar v-else :size="100" class="user-avatar default">
             {{ userInfo.userName?.[0] || '无' }}
           </a-avatar>
         </div>
 
-        <a-descriptions :column="1" bordered class="info-list">
-          <a-descriptions-item label="账号">
-            {{ userInfo.userAccount || '-' }}
-          </a-descriptions-item>
-          <a-descriptions-item label="用户名">
-            {{ userInfo.userName || '-' }}
-          </a-descriptions-item>
-          <a-descriptions-item label="头像">
-            {{ userInfo.userAvatar || '-' }}
-          </a-descriptions-item>
-          <a-descriptions-item label="简介">
-            {{ userInfo.userProfile || '-' }}
-          </a-descriptions-item>
-          <a-descriptions-item label="角色">
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">账号</span>
+            <span class="info-value">{{ userInfo.userAccount || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">用户名</span>
+            <span class="info-value">{{ userInfo.userName || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">简介</span>
+            <span class="info-value">{{ userInfo.userProfile || '暂无简介' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">角色</span>
             <a-tag :color="userInfo.userRole === 1 ? 'blue' : 'green'">
               {{ userInfo.userRole === 1 ? '管理员' : '用户' }}
             </a-tag>
-          </a-descriptions-item>
-        </a-descriptions>
-
-        <div class="action-section">
-          <a-button type="primary" @click="handleEdit">编辑资料</a-button>
+          </div>
         </div>
       </div>
     </div>
@@ -173,22 +181,48 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.user-info-container {
+.user-info-page {
   padding: 24px;
-  display: flex;
-  justify-content: center;
   min-height: calc(100vh - 64px - 50px);
+  background: #f0f2f5;
 }
 
-.user-info-card {
-  width: 500px;
+/* 页面标题 */
+.page-header {
+  margin-bottom: 24px;
+}
+
+.header-content {
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
+  padding: 24px 32px;
+  border-radius: 12px;
+}
+
+.page-title {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.page-desc {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* 用户信息卡片 */
+.info-card {
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   overflow: hidden;
 }
 
 .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 20px 24px;
   border-bottom: 1px solid #f0f0f0;
 }
@@ -200,22 +234,63 @@ onMounted(() => {
   color: #333;
 }
 
+.edit-btn {
+  color: #fff;
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
+  border: none;
+  border-radius: 6px;
+}
+
+.edit-btn:hover {
+  opacity: 0.9;
+}
+
 .info-content {
-  padding: 24px;
+  padding: 32px 24px;
 }
 
 .avatar-section {
   display: flex;
   justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
-.info-list {
-  margin-bottom: 24px;
+.user-avatar {
+  border: 4px solid rgba(0, 188, 212, 0.1);
 }
 
-.action-section {
+.user-avatar.default {
+  background: linear-gradient(135deg, #00bcd4 0%, #00838f 100%);
+  color: #fff;
+  font-size: 36px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.info-item {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-label {
+  font-size: 13px;
+  color: #999;
+}
+
+.info-value {
+  font-size: 15px;
+  color: #333;
+  font-weight: 500;
+}
+
+@media (max-width: 600px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
