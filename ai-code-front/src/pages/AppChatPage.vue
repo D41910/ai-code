@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, onUnmounted, computed } from 'vue'
+import { onMounted, reactive, ref, onUnmounted, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
 import { getAppVOById, chatToGenCode, deployApp, deleteOneself, adminDelete, updateOneself, adminUpdate } from '@/api/appController'
@@ -52,9 +52,29 @@ const chatMessages = ref<Array<{ role: 'user' | 'assistant'; content: string }>>
 const inputMessage = ref('')
 const isGenerating = ref(false)
 const deployUrl = ref('')
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (chatMessagesRef.value) {
+      chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
+    }
+  })
+}
+
+// 使用节流避免频繁滚动
+let scrollTimeout: ReturnType<typeof setTimeout> | null = null
+const smoothScrollToBottom = () => {
+  if (scrollTimeout) return
+  scrollTimeout = setTimeout(() => {
+    scrollToBottom()
+    scrollTimeout = null
+  }, 50)
+}
 const iframeSrc = ref('')
+const previewVersion = ref(0) // 用于强制刷新预览
 const deployModalVisible = ref(false)
 const isInitialLoad = ref(true)
+const chatMessagesRef = ref<HTMLElement | null>(null)
 
 const openDeployedSite = () => {
   if (deployUrl.value) {
@@ -79,7 +99,12 @@ const fetchAppDetail = async () => {
       app.value = res.data.data
       // 用生成目录预览
       if (app.value.codeGenType) {
-        iframeSrc.value = getStaticPreviewUrl(app.value.codeGenType, appId.value)
+        const newSrc = getStaticPreviewUrl(app.value.codeGenType, appId.value)
+        // 如果预览地址变了，更新并增加版本号
+        if (newSrc !== iframeSrc.value) {
+          iframeSrc.value = newSrc
+          previewVersion.value++
+        }
       }
       // 非查看模式且是首次加载，自动发送初始消息
       if (!isViewMode.value && app.value.initPrompt && isInitialLoad.value) {
@@ -104,6 +129,7 @@ const handleDeploy = async () => {
     if (res.data.code === 20000 && res.data.data) {
       deployUrl.value = res.data.data
       iframeSrc.value = deployUrl.value
+      previewVersion.value++ // 部署成功后强制刷新预览
       deployModalVisible.value = true
       // 刷新应用详情，获取最新的 deployKey
       await fetchAppDetail()
@@ -176,6 +202,7 @@ const sendMessage = async () => {
 
   const userMessage = inputMessage.value.trim()
   chatMessages.value.push({ role: 'user', content: userMessage })
+  smoothScrollToBottom()
   inputMessage.value = ''
   isGenerating.value = true
 
@@ -221,11 +248,13 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
         if (content !== undefined && content !== null) {
           fullContent += content
           chatMessages.value[aiMessageIndex].content = fullContent
+          smoothScrollToBottom()
         }
       } catch (error) {
         // 非JSON格式的数据直接拼接（如纯文本片段）
         fullContent += event.data
         chatMessages.value[aiMessageIndex].content = fullContent
+        smoothScrollToBottom()
       }
     }
 
@@ -237,6 +266,7 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
       isGenerating.value = false
       closeEventSource()
 
+      // 不再这里增加 previewVersion，让 fetchAppDetail 统一处理
       // 延迟更新预览，确保后端已完成处理
       setTimeout(async () => {
         await fetchAppDetail()
@@ -324,7 +354,7 @@ onUnmounted(() => {
     <div class="main-content">
       <!-- 左侧聊天区域 -->
       <div class="chat-area">
-        <div class="chat-messages" id="chatMessages">
+        <div class="chat-messages" ref="chatMessagesRef" id="chatMessages">
           <div
             v-for="(msg, index) in chatMessages"
             :key="index"
@@ -381,6 +411,7 @@ onUnmounted(() => {
           </div>
           <iframe
             v-else-if="iframeSrc"
+            :key="previewVersion"
             :src="iframeSrc"
             frameborder="0"
             class="preview-iframe"
@@ -528,6 +559,25 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  scroll-behavior: smooth;
+}
+
+/* 自定义滚动条样式 */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(0, 131, 143, 0.3);
+  border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 131, 143, 0.5);
 }
 
 .message {
