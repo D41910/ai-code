@@ -59,8 +59,21 @@ const deployUrl = ref('')
 const scrollToBottom = () => {
   nextTick(() => {
     if (chatMessagesRef.value) {
-      // 直接设置 scrollTop，不使用平滑滚动
-      chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
+      // 强制滚动时直接滚动到底部
+      if (forceScroll.value) {
+        chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
+        forceScroll.value = false
+        return
+      }
+      // 只有当用户在底部附近时才自动滚动
+      if (userAutoFollow.value) {
+        const { scrollTop, scrollHeight, clientHeight } = chatMessagesRef.value
+        const distanceToBottom = scrollHeight - scrollTop - clientHeight
+        // 如果距离底部小于50px，认为在底部，自动跟随
+        if (distanceToBottom < 50) {
+          chatMessagesRef.value.scrollTop = scrollHeight
+        }
+      }
     }
   })
 }
@@ -74,6 +87,16 @@ const smoothScrollToBottom = () => {
     scrollTimeout = null
   }, 50)
 }
+
+// 智能滚动：检测用户是否主动离开了底部
+const handleScroll = () => {
+  if (!chatMessagesRef.value) return
+  const { scrollTop, scrollHeight, clientHeight } = chatMessagesRef.value
+  const distanceToBottom = scrollHeight - scrollTop - clientHeight
+  // 如果距离底部超过100px，认为用户主动离开了底部
+  userAutoFollow.value = distanceToBottom <= 100
+}
+
 const iframeSrc = ref('')
 const previewVersion = ref(0) // 用于强制刷新预览
 const deployModalVisible = ref(false)
@@ -84,6 +107,8 @@ const loadingHistory = ref(false)
 const hasMoreHistory = ref(false)
 const lastCreateTime = ref<string>()
 const historyLoaded = ref(false)
+const userAutoFollow = ref(true)  // 用户是否在自动跟随模式
+const forceScroll = ref(false)  // 是否强制滚动
 
 const openDeployedSite = () => {
   if (deployUrl.value) {
@@ -132,6 +157,7 @@ const loadChatHistory = async (isLoadMore = false) => {
         } else {
           // 初始加载，直接设置消息列表并滚动到底部
           chatMessages.value = historyMessages
+          forceScroll.value = true  // 强制滚动到底部
           scrollToBottom()
         }
         // 更新游标为最老消息的创建时间
@@ -141,6 +167,9 @@ const loadChatHistory = async (isLoadMore = false) => {
       } else {
         hasMoreHistory.value = false
         // 没有历史记录时也滚动到底部
+        if (chatMessages.value.length > 0) {
+          forceScroll.value = true
+        }
         scrollToBottom()
       }
       historyLoaded.value = true
@@ -282,6 +311,7 @@ const sendMessage = async () => {
   const userMessage = inputMessage.value.trim()
   chatMessages.value.push({ role: 'user', content: userMessage })
   // 发送消息后立即滚动到底部
+  userAutoFollow.value = true  // 发送消息后重置为自动跟随
   nextTick(() => {
     scrollToBottom()
   })
@@ -455,7 +485,7 @@ onUnmounted(() => {
     <div class="main-content">
       <!-- 左侧聊天区域 -->
       <div class="chat-area">
-        <div class="chat-messages" ref="chatMessagesRef" id="chatMessages">
+        <div class="chat-messages" ref="chatMessagesRef" id="chatMessages" @scroll="handleScroll">
           <!-- 加载更多按钮 -->
           <div v-if="hasMoreHistory" class="load-more-container">
             <a-button type="link" @click="loadMoreHistory" :loading="loadingHistory" size="small">
