@@ -318,6 +318,7 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
       } else {
         // 显示完成且已收到done，刷新预览
         typingTimer = null
+        inputMessage.value = ''  // 确保输入框为空
         fetchAppDetail()
       }
     }, 30) // 固定30ms间隔，与豆包一致
