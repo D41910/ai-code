@@ -11,4 +11,5 @@ import com.mybatisflex.core.BaseMapper;
  */
 public interface AppMapper extends BaseMapper<App> {
 
+    String getSystemPromptByAppId(Long appId);
 }

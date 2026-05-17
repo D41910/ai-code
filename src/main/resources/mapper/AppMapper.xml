@@ -2,6 +2,20 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.dsj.aicode.genresult.mapper.AppMapper">
+<mapper namespace="com.dsj.aicode.mapper.AppMapper">
 
+
+
+    <select id="getSystemPromptByAppId" parameterType="java.lang.Long" resultType="java.lang.String">
+        SELECT
+            content
+        FROM
+            app
+        LEFT JOIN
+             system_prompt as sp
+        ON
+            app.code_gen_type = sp.code_gen_type
+        WHERE
+            app.id = #{appId}
+    </select>
 </mapper>

@@ -1,7 +1,7 @@
 package com.dsj.aicode.aop;
 
-import com.dsj.aicode.Exception.BusinessException;
-import com.dsj.aicode.Exception.ErrorCode;
+import com.dsj.aicode.exception.BusinessException;
+import com.dsj.aicode.exception.ErrorCode;
 import com.dsj.aicode.annotation.AuthCheck;
 import com.dsj.aicode.model.entity.User;
 import com.dsj.aicode.model.enums.UserRoleEnum;

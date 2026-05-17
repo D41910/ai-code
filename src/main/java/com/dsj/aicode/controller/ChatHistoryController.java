@@ -1,7 +1,7 @@
 package com.dsj.aicode.controller;
 
-import com.dsj.aicode.Exception.ErrorCode;
-import com.dsj.aicode.Exception.ThrowUtils;
+import com.dsj.aicode.exception.ErrorCode;
+import com.dsj.aicode.exception.ThrowUtils;
 import com.dsj.aicode.annotation.AuthCheck;
 import com.dsj.aicode.common.BaseResponse;
 import com.dsj.aicode.common.ResultUtils;

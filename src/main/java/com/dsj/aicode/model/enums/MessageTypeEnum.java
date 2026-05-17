@@ -12,6 +12,7 @@ import lombok.Getter;
 @Getter
 public enum MessageTypeEnum {
 
+    SYSTEM(0, "系统消息", "system"),
     USER(1, "用户消息", "user"),
     AI(2, "AI消息", "ai");
 

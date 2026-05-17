@@ -22,7 +22,7 @@ create table  user
     is_delete     tinyint  default 0                 not null comment '是否删除',
     UNIQUE KEY uk_userAccount (user_account),
     INDEX idx_userName (user_name)
-) comment '用户' collate = utf8mb4_unicode_ci;
+) comment '用户';
 
 
 -- 插入20条用户虚拟数据，id从10开始，头像/图片为空

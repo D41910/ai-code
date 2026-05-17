@@ -1,8 +1,8 @@
 package com.dsj.aicode.controller;
 
 import cn.hutool.core.util.ObjUtil;
-import com.dsj.aicode.Exception.ErrorCode;
-import com.dsj.aicode.Exception.ThrowUtils;
+import com.dsj.aicode.exception.ErrorCode;
+import com.dsj.aicode.exception.ThrowUtils;
 import com.dsj.aicode.annotation.AuthCheck;
 import com.dsj.aicode.common.BaseResponse;
 import com.dsj.aicode.common.DeleteRequest;
@@ -18,8 +18,6 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 用户 控制层。

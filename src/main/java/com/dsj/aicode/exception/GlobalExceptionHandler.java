@@ -1,4 +1,4 @@
-package com.dsj.aicode.Exception;
+package com.dsj.aicode.exception;
 
 import com.dsj.aicode.common.BaseResponse;
 import com.dsj.aicode.common.ResultUtils;

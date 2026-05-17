@@ -2,12 +2,9 @@ package com.dsj.aicode.core.saver;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.CharsetUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
-import com.dsj.aicode.Exception.BusinessException;
-import com.dsj.aicode.Exception.ErrorCode;
-import com.dsj.aicode.ai.model.HtmlCodeResult;
-import com.dsj.aicode.ai.model.MultiFileCodeResult;
+import com.dsj.aicode.exception.BusinessException;
+import com.dsj.aicode.exception.ErrorCode;
 import com.dsj.aicode.constant.AppConstant;
 import com.dsj.aicode.model.enums.CodeGenTypeEnum;
 

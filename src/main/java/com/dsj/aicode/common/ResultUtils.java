@@ -1,6 +1,6 @@
 package com.dsj.aicode.common;
 
-import com.dsj.aicode.Exception.ErrorCode;
+import com.dsj.aicode.exception.ErrorCode;
 
 /**
  * @author dongsijun

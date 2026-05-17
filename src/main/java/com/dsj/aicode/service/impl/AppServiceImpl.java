@@ -6,13 +6,13 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
-import com.dsj.aicode.Exception.BusinessException;
-import com.dsj.aicode.Exception.ErrorCode;
-import com.dsj.aicode.Exception.ThrowUtils;
+import com.dsj.aicode.config.ChatMemoryProperties;
+import com.dsj.aicode.exception.BusinessException;
+import com.dsj.aicode.exception.ErrorCode;
+import com.dsj.aicode.exception.ThrowUtils;
 import com.dsj.aicode.constant.AppConstant;
 import com.dsj.aicode.core.AiCodeGeneratorFacade;
 import com.dsj.aicode.mapper.AppMapper;
-import com.dsj.aicode.mapper.UserMapper;
 import com.dsj.aicode.model.dto.AppAddDTO;
 import com.dsj.aicode.model.dto.AppAdminUpdateDTO;
 import com.dsj.aicode.model.dto.AppQueryDTO;
@@ -21,7 +21,6 @@ import com.dsj.aicode.model.entity.App;
 import com.dsj.aicode.model.entity.User;
 import com.dsj.aicode.model.enums.CodeGenTypeEnum;
 import com.dsj.aicode.model.enums.MessageTypeEnum;
-import com.dsj.aicode.model.enums.UserRoleEnum;
 import com.dsj.aicode.model.vo.AppVO;
 import com.dsj.aicode.model.vo.UserVO;
 import com.dsj.aicode.service.AppService;
@@ -30,10 +29,13 @@ import com.dsj.aicode.service.UserService;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
+import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.memory.chat.TokenWindowChatMemory;
+import dev.langchain4j.model.openai.OpenAiTokenCountEstimator;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -59,6 +61,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     private final UserService userService;
     private final AiCodeGeneratorFacade aiCodeGeneratorFacade;
     private final ChatHistoryService chatHistoryService;
+    private final RedisChatMemoryStore redisChatMemoryStore;
+    private final ChatMemoryProperties chatMemoryProperties;
 
     @Override
     public Flux<String> chatToGenCode(Long appId, String message, User loginUser) {
@@ -77,6 +81,14 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
         //保存用户消息
         chatHistoryService.addChatMessage(appId,message, MessageTypeEnum.USER.getValue(), loginUser.getId());
+
+        TokenWindowChatMemory chatMemory = TokenWindowChatMemory.builder()
+                .id(appId)
+                .chatMemoryStore(redisChatMemoryStore)
+                .maxTokens(170000, new OpenAiTokenCountEstimator("gpt-5"))
+                .build();
+
+        chatHistoryService.loadChatHistoryToMemory(appId,chatMemory,20);
 
         // 构建带错误处理的流式响应
         Flux<String> flux = aiCodeGeneratorFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
@@ -381,13 +393,13 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         String sortOrder = appQueryDTO.getSortOrder();
         return QueryWrapper.create()
                 .eq("id", id, ObjUtil.isNotEmpty(appQueryDTO.getId()))
-                .like("appName", appName, StrUtil.isNotBlank(appQueryDTO.getAppName()))
+                .like("app_name", appName, StrUtil.isNotBlank(appQueryDTO.getAppName()))
                 .like("cover", cover, StrUtil.isNotBlank(appQueryDTO.getCover()))
-                .like("initPrompt", initPrompt, StrUtil.isNotBlank(appQueryDTO.getInitPrompt()))
-                .eq("codeGenType", codeGenType, StrUtil.isNotBlank(appQueryDTO.getCodeGenType()))
-                .eq("deployKey", deployKey, StrUtil.isNotBlank(appQueryDTO.getDeployKey()))
+                .like("init_prompt", initPrompt, StrUtil.isNotBlank(appQueryDTO.getInitPrompt()))
+                .eq("code_gen_type", codeGenType, StrUtil.isNotBlank(appQueryDTO.getCodeGenType()))
+                .eq("deploy_key", deployKey, StrUtil.isNotBlank(appQueryDTO.getDeployKey()))
                 .eq("priority", priority, ObjUtil.isNotEmpty(appQueryDTO.getPriority()))
-                .eq("userId", userId, ObjUtil.isNotEmpty(appQueryDTO.getUserId()))
+                .eq("user_id", userId, ObjUtil.isNotEmpty(appQueryDTO.getUserId()))
                 .orderBy(sortField, "ascend".equals(sortOrder));
     }
 

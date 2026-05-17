@@ -40,7 +40,7 @@ public class App implements Serializable {
     /**
      * 应用名称
      */
-    @Column("appName")
+    @Column("app_name")
     private String appName;
 
     /**
@@ -51,25 +51,25 @@ public class App implements Serializable {
     /**
      * 应用初始化的 prompt
      */
-    @Column("initPrompt")
+    @Column("init_prompt")
     private String initPrompt;
 
     /**
      * 代码生成类型（枚举）
      */
-    @Column("codeGenType")
+    @Column("code_gen_type")
     private String codeGenType;
 
     /**
      * 部署标识
      */
-    @Column("deployKey")
+    @Column("deploy_key")
     private String deployKey;
 
     /**
      * 部署时间
      */
-    @Column("deployedTime")
+    @Column("deployed_time")
     private LocalDateTime deployedTime;
 
     /**
@@ -80,31 +80,31 @@ public class App implements Serializable {
     /**
      * 创建用户id
      */
-    @Column("userId")
+    @Column("user_id")
     private Long userId;
 
     /**
      * 编辑时间
      */
-    @Column("editTime")
+    @Column("edit_time")
     private LocalDateTime editTime;
 
     /**
      * 创建时间
      */
-    @Column("createTime")
+    @Column("create_time")
     private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
-    @Column("updateTime")
+    @Column("update_time")
     private LocalDateTime updateTime;
 
     /**
      * 是否删除
      */
-    @Column(value = "isDelete", isLogicDelete = true)
+    @Column(value = "is_delete", isLogicDelete = true)
     private Integer isDelete;
 
 }

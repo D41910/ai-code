@@ -1,4 +1,4 @@
-package com.dsj.aicode.Exception;
+package com.dsj.aicode.exception;
 
 import lombok.Getter;
 

@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 public class MyBatisCodeGenerator {
 
     // 需要生成的表名
-    private static final String[] TABLE_NAMES = {"user"};
+    private static final String[] TABLE_NAMES = {"system_prompt"};
 
     public static void main(String[] args) {
         // 获取数据源信息
@@ -56,7 +56,7 @@ public class MyBatisCodeGenerator {
         globalConfig.getStrategyConfig()
                 .setGenerateTable(TABLE_NAMES)
                 // 设置逻辑删除的默认字段名称
-                .setLogicDeleteColumn("isDelete");
+                .setLogicDeleteColumn("is_delete");
 
         // 设置生成 entity 并启用 Lombok
         globalConfig.enableEntity()

@@ -31,6 +31,20 @@
     </properties>
     <dependencies>
 
+        <!-- Source: https://mvnrepository.com/artifact/dev.langchain4j/langchain4j-community-redis-spring-boot-starter -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-community-redis-spring-boot-starter</artifactId>
+            <version>1.13.0-beta23</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>7.0.0</version>
+        </dependency>
+
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-reactor</artifactId>

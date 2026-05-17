@@ -1,8 +1,9 @@
 package com.dsj.aicode.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.dsj.aicode.Exception.ErrorCode;
-import com.dsj.aicode.Exception.ThrowUtils;
+import com.dsj.aicode.exception.ErrorCode;
+import com.dsj.aicode.exception.ThrowUtils;
 import com.dsj.aicode.mapper.ChatHistoryMapper;
 import com.dsj.aicode.model.dto.ChatHistoryQueryDTO;
 import com.dsj.aicode.model.entity.App;
@@ -15,11 +16,20 @@ import com.dsj.aicode.service.ChatHistoryService;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.memory.chat.TokenWindowChatMemory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * 对话历史 服务层实现。
@@ -29,9 +39,65 @@ import java.time.LocalDateTime;
  */
 @Service
 @RequiredArgsConstructor(onConstructor_ = {@Lazy})
+@Slf4j
 public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatHistory> implements ChatHistoryService {
 
     private final AppService appService;
+
+    @Override
+    public int loadChatHistoryToMemory(Long appId, TokenWindowChatMemory chatMemory, int maxCount) {
+        try {
+            // ==============================================
+            // 关键：这里取的就是【当前 appId 自己的对话】，绝对不会拿到别人的
+            // ==============================================
+            List<ChatMessage> existingMessages = chatMemory.messages();
+
+            // 如果Redis里已经有历史了 → 直接返回，不查库、不覆盖
+            if (CollUtil.isNotEmpty(existingMessages)) {
+                log.info("appId:{} 对话已存在于Redis，跳过DB加载，数量:{}",
+                        appId, existingMessages.size());
+                return existingMessages.size();
+            }
+
+            // ==============================================
+            // Redis 无数据 → 第一次加载，从DB读取
+            // ==============================================
+            QueryWrapper queryWrapper = QueryWrapper.create()
+                    .eq(ChatHistory::getAppId, appId)
+                    .orderBy(ChatHistory::getCreateTime, false)
+                    .limit(1, maxCount);
+
+            List<ChatHistory> historyList = this.list(queryWrapper);
+            if (CollUtil.isEmpty(historyList)) {
+                return 0;
+            }
+
+            // 反转顺序（老的在前）
+            Collections.reverse(historyList);
+
+            // 加入 chatMemory（自动写入 Redis，且按 appId 隔离）
+            int loadedCount = 0;
+            for (ChatHistory history : historyList) {
+                if (history.getMessageType().equals(MessageTypeEnum.USER.getCode())) {
+                    chatMemory.add(UserMessage.from(history.getMessage()));
+                    loadedCount++;
+                } else if (history.getMessageType().equals(MessageTypeEnum.AI.getCode())) {
+                    chatMemory.add(AiMessage.from(history.getMessage()));
+                    loadedCount++;
+                }else if(history.getMessageType().equals(MessageTypeEnum.SYSTEM.getCode())){
+                    chatMemory.add(SystemMessage.from(history.getMessage()));
+                    loadedCount++;
+                }
+            }
+
+            log.info("appId:{} 首次从DB加载对话成功，共{}条", appId, loadedCount);
+            return loadedCount;
+
+        } catch (Exception e) {
+            log.error("加载对话历史失败 appId:{}", appId, e);
+            return 0;
+        }
+    }
 
     @Override
     public boolean addChatMessage(Long appId, String message, String messageType, Long userId) {
@@ -55,7 +121,7 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
     public boolean deleteByAppId(Long appId) {
         ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID不能为空");
         QueryWrapper queryWrapper = QueryWrapper.create()
-                .eq("appId", appId);
+                .eq("app_id", appId);
         return this.remove(queryWrapper);
     }
 
@@ -82,19 +148,19 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
         // 拼接查询条件
         queryWrapper.eq("id", id)
                 .like("message", message)
-                .eq("messageType", messageType)
-                .eq("appId", appId)
-                .eq("userId", userId);
+                .eq("message_type", messageType)
+                .eq("app_id", appId)
+                .eq("user_id", userId);
         // 游标查询逻辑 - 只使用 createTime 作为游标
         if (lastCreateTime != null) {
-            queryWrapper.lt("createTime", lastCreateTime);
+            queryWrapper.lt("create_time", lastCreateTime);
         }
         // 排序
         if (StrUtil.isNotBlank(sortField)) {
             queryWrapper.orderBy(sortField, "ascend".equals(sortOrder));
         } else {
             // 默认按创建时间降序排列
-            queryWrapper.orderBy("createTime", false);
+            queryWrapper.orderBy("create_time", false);
         }
         return queryWrapper;
     }

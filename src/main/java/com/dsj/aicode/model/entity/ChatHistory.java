@@ -44,36 +44,36 @@ public class ChatHistory implements Serializable {
     /**
      * 应用id
      */
-    @Column("appId")
+    @Column("app_id")
     private Long appId;
 
     /**
      * 创建用户id
      */
-    @Column("userId")
+    @Column("user_id")
     private Long userId;
 
     /**
      * 消息类型：1-用户消息，2-AI消息
      */
-    @Column("messageType")
+    @Column("message_type")
     private Integer messageType;
 
     /**
      * 创建时间
      */
-    @Column("createTime")
+    @Column("create_time")
     private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
-    @Column("updateTime")
+    @Column("update_time")
     private LocalDateTime updateTime;
 
     /**
      * 是否删除
      */
-    @Column(value = "isDelete", isLogicDelete = true)
+    @Column(value = "is_delete", isLogicDelete = true)
     private Integer isDelete;
 }
